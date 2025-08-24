@@ -19,3 +19,6 @@
 [submodule "modules/yacppl"]
 	path = modules/yacppl
 	url = https://github.com/Neargye/yacppl.git
+[submodule "modules/zlib"]
+	path = modules/zlib
+	url = https://github.com/madler/zlib.git
