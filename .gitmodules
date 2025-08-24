@@ -4,3 +4,6 @@
 [submodule "modules/phnt"]
 	path = modules/phnt
 	url = https://github.com/winsiderss/phnt.git
+[submodule "modules/magic_enum"]
+	path = modules/magic_enum
+	url = https://github.com/Neargye/magic_enum.git
