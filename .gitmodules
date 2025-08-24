@@ -16,3 +16,6 @@
 [submodule "modules/scope_guard"]
 	path = modules/scope_guard
 	url = https://github.com/Neargye/scope_guard.git
+[submodule "modules/yacppl"]
+	path = modules/yacppl
+	url = https://github.com/Neargye/yacppl.git
