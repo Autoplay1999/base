@@ -7,3 +7,6 @@
 [submodule "modules/magic_enum"]
 	path = modules/magic_enum
 	url = https://github.com/Neargye/magic_enum.git
+[submodule "modules/semver"]
+	path = modules/semver
+	url = https://github.com/Neargye/semver.git
