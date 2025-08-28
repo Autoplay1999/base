@@ -31,3 +31,6 @@
 [submodule "modules/lazy_importer"]
 	path = modules/lazy_importer
 	url = https://github.com/JustasMasiulis/lazy_importer.git
+[submodule "modules/tinycc"]
+	path = modules/tinycc
+	url = https://github.com/TinyCC/tinycc.git
