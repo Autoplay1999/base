@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-set "_modules=json lazy_importer magic_enum nameof nirvana phnt scope_guard semver tinycc turbo_base64 vmp xorstr yacppl zlib"
+set "_modules=curl json lazy_importer magic_enum nameof nirvana phnt scope_guard semver tinycc turbo_base64 vmp xorstr yacppl zlib"
 
 for %%i in (%_modules%) do (
     echo Building %%i...
