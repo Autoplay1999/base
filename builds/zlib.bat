@@ -8,7 +8,7 @@ set "_base=..\modules\!_project!"
 
 if exist !_dest! rd /S /Q "!_dest!"
 if exist !_base! rd /S /Q "!_base!"
-git submodule update --init !_base!
+git submodule update --init !_base! >nul 2>&1
 
 call base
 call "!vs_msbuildcmd!" >nul 2>&1

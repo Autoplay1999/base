@@ -12,7 +12,7 @@ set WINBUILD_ACKNOWLEDGE_DEPRECATED=yes
 
 if exist !_dest! rd /S /Q "!_dest!"
 if exist !_base! rd /S /Q "!_base!"
-git submodule update --init !_base!
+git submodule update --init !_base!  >nul 2>&1
 
 call base
 md "!_dest!\lib" "!_dest!\include" 2>nul

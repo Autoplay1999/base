@@ -9,19 +9,21 @@ set "_curdir=%~dp0"
 
 if exist !_dest! rd /S /Q "!_dest!"
 if exist !_base! rd /S /Q "!_base!"
-git submodule update --init !_base!
+git submodule update --init !_base! >nul 2>&1
 
 call base
 pushd "!_base!\win32"
-call "!vs_vcvar32!"
+call "!vs_vcvar32!" >nul 2>&1
 call build-tcc -c cl >nul 2>&1
+@echo off
 if %ERRORLEVEL% neq 0 goto :eof
 msbuild !_curdir!/!_project!/!_project!.vcxproj -p:Configuration=Release -p:Platform=Win32 -t:Clean;Rebuild -v:q >nul 2>&1
 if %ERRORLEVEL% neq 0 goto :EOF
 msbuild !_curdir!/!_project!/!_project!.vcxproj -p:Configuration=Debug -p:Platform=Win32 -t:Clean;Rebuild -v:q >nul 2>&1
 if %ERRORLEVEL% neq 0 goto :EOF
-call "!vs_vcvar64!"
+call "!vs_vcvar64!" >nul 2>&1
 call build-tcc -c cl -t 32 >nul 2>&1
+@echo off
 msbuild !_curdir!/!_project!/!_project!.vcxproj -p:Configuration=Release -p:Platform=x64 -t:Clean;Rebuild -v:q >nul 2>&1
 if %ERRORLEVEL% neq 0 goto :EOF
 msbuild !_curdir!/!_project!/!_project!.vcxproj -p:Configuration=Debug -p:Platform=x64 -t:Clean;Rebuild -v:q >nul 2>&1
