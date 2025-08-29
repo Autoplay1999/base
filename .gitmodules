@@ -34,3 +34,6 @@
 [submodule "modules/tinycc"]
 	path = modules/tinycc
 	url = https://github.com/TinyCC/tinycc.git
+[submodule "modules/json"]
+	path = modules/json
+	url = https://github.com/nlohmann/json.git
