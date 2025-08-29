@@ -10,6 +10,10 @@ set "_build=!_dest!\_!_project!"
 set RTLIBCFG=static
 set WINBUILD_ACKNOWLEDGE_DEPRECATED=yes
 
+if exist !_dest! rd /S /Q "!_dest!"
+if exist !_base! rd /S /Q "!_base!"
+git submodule update --init !_base!
+
 call base
 md "!_dest!\lib" "!_dest!\include" 2>nul
 xcopy /S /H /Y /R /I "!_base!" "!_build!" >nul 2>&1
