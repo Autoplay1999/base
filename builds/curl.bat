@@ -14,15 +14,15 @@ call base
 md "!_dest!\lib" "!_dest!\include" 2>nul
 xcopy /S /H /Y /R /I "!_base!" "!_build!" 1>nul
 pushd "!_build!\winbuild"
-call "!vs_vcvar64!" 1>nul
-nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=yes GEN_PDB=yes MACHINE=x64 1>nul
+call "!vs_vcvar64!" >nul 2>&1
+nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=yes GEN_PDB=yes MACHINE=x64 >nul 2>&1
 if %ERRORLEVEL% neq 0 goto :eof
-nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=no GEN_PDB=no MACHINE=x64 1>nul
+nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=no GEN_PDB=no MACHINE=x64 >nul 2>&1
 if %ERRORLEVEL% neq 0 goto :eof
-call "!vs_vcvar32!" 1>nul
-nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=yes GEN_PDB=yes MACHINE=x86 1>nul
+call "!vs_vcvar32!" >nul 2>&1
+nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=yes GEN_PDB=yes MACHINE=x86 >nul 2>&1
 if %ERRORLEVEL% neq 0 goto :eof
-nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=no GEN_PDB=no MACHINE=x86 1>nul
+nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=no GEN_PDB=no MACHINE=x86 >nul 2>&1
 if %ERRORLEVEL% neq 0 goto :eof
 popd
 pushd "!_build!\builds"
