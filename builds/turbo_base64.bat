@@ -7,16 +7,16 @@ set "_dest=..\bin\!_project!"
 set "_base=..\modules\!_project!"
 
 call base
-call "!vs_msbuildcmd!" 1>nul
-msbuild !_project!/!_project!.vcxproj -p:Configuration=Release -p:Platform=x64 -t:Clean;Rebuild -v:m
+call "!vs_msbuildcmd!" >nul 2>&1
+msbuild !_project!/!_project!.vcxproj -p:Configuration=Release -p:Platform=x64 -t:Clean;Rebuild -v:q >nul 2>&1
 if %ERRORLEVEL% neq 0 goto :EOF
-msbuild !_project!/!_project!.vcxproj -p:Configuration=Debug -p:Platform=x64 -t:Clean;Rebuild -v:m
+msbuild !_project!/!_project!.vcxproj -p:Configuration=Debug -p:Platform=x64 -t:Clean;Rebuild -v:q >nul 2>&1
 if %ERRORLEVEL% neq 0 goto :EOF
-msbuild !_project!/!_project!.vcxproj -p:Configuration=Release -p:Platform=Win32 -t:Clean;Rebuild -v:m
+msbuild !_project!/!_project!.vcxproj -p:Configuration=Release -p:Platform=Win32 -t:Clean;Rebuild -v:q >nul 2>&1
 if %ERRORLEVEL% neq 0 goto :EOF
-msbuild !_project!/!_project!.vcxproj -p:Configuration=Debug -p:Platform=Win32 -t:Clean;Rebuild -v:m
+msbuild !_project!/!_project!.vcxproj -p:Configuration=Debug -p:Platform=Win32 -t:Clean;Rebuild -v:q >nul 2>&1
 if %ERRORLEVEL% neq 0 goto :EOF
-md "!_dest!\lib" "!_dest!\include" 2>nul
-xcopy /S /H /Y /R /I "!_output!\lib" "!_dest!\lib\" 1>nul
-xcopy /H /Y /R "!_base!\turbob64.h" "!_dest!\include\" 1>nul
-rd /S /Q "!_output!" 2>nul
+md "!_dest!\lib" "!_dest!\include" >nul 2>&1
+xcopy /S /H /Y /R /I "!_output!\lib" "!_dest!\lib\" >nul 2>&1
+xcopy /H /Y /R "!_base!\turbob64.h" "!_dest!\include\" >nul 2>&1
+rd /S /Q "!_output!" >nul 2>&1
