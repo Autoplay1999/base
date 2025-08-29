@@ -37,3 +37,6 @@
 [submodule "modules/json"]
 	path = modules/json
 	url = https://github.com/nlohmann/json.git
+[submodule "modules/curl"]
+	path = modules/curl
+	url = https://github.com/curl/curl.git
