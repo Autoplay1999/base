@@ -40,3 +40,15 @@
 [submodule "modules/curl"]
 	path = modules/curl
 	url = https://github.com/curl/curl.git
+[submodule "modules/imgui/imgui"]
+	path = modules/imgui/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = master
+[submodule "modules/imgui/master/imgui"]
+	path = modules/imgui/master/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = master
+[submodule "modules/imgui/docking/imgui"]
+	path = modules/imgui/docking/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking
