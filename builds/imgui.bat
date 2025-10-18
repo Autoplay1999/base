@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 
 set "_project_path=imgui"
-set "_project_dir=master docking"
+set "_project_dir=master docking win98"
 set "_project=imgui imgui_dx9 imgui_dx11 imgui_win32"
 set "_configurations=Release Debug"
 set "_platforms=x64 Win32"

@@ -52,3 +52,7 @@
 	path = modules/imgui/docking/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
+[submodule "modules/imgui/win98/imgui"]
+	path = modules/imgui/win98/imgui
+	url = https://github.com/Autoplay1999/imgui.git
+	branch = external/win98
