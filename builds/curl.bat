@@ -12,8 +12,10 @@ set WINBUILD_ACKNOWLEDGE_DEPRECATED=yes
 
 if exist !_dest! rd /S /Q "!_dest!"
 if exist !_base! rd /S /Q "!_base!"
-git checkout curl-8_16_0
 git submodule update --init !_base!  >nul 2>&1
+pushd !_base!
+git checkout curl-8_16_0
+popd
 
 call base
 md "!_dest!\lib" "!_dest!\include" 2>nul
