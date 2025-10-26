@@ -56,3 +56,6 @@
 	path = modules/imgui/win98/imgui
 	url = https://github.com/Autoplay1999/imgui.git
 	branch = external/win98
+[submodule "modules/xorstr2"]
+	path = modules/xorstr2
+	url = https://github.com/qis/xorstr.git
