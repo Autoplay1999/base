@@ -12,7 +12,7 @@ set WINBUILD_ACKNOWLEDGE_DEPRECATED=yes
 
 if exist !_dest! rd /S /Q "!_dest!"
 if exist !_base! rd /S /Q "!_base!"
-git submodule update --init !_base!  >nul 2>&1
+git submodule update --init --recursive !_base!  >nul 2>&1
 pushd !_base!
 git checkout curl-8_16_0
 popd
