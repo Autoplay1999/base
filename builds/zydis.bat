@@ -26,3 +26,4 @@ xcopy /S /H /Y /R /I "!_output!\DebugX64" "!_dest!\lib\x64\debug" >nul 2>&1
 xcopy /S /H /Y /R /I "!_output!\ReleaseX86" "!_dest!\lib\x86\release" >nul 2>&1
 xcopy /S /H /Y /R /I "!_output!\ReleaseX64" "!_dest!\lib\x64\release" >nul 2>&1
 xcopy /S /H /Y /R /I "!_base!\include" "!_dest!\include\" >nul 2>&1
+xcopy /S /H /Y /R /I "!_base!\dependencies\zycore\include" "!_dest!\include\" >nul 2>&1
