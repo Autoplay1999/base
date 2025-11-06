@@ -62,3 +62,6 @@
 [submodule "modules/zydis"]
 	path = modules/zydis
 	url = https://github.com/zyantific/zydis.git
+[submodule "modules/KNSoft.SlimDetours"]
+	path = modules/KNSoft.SlimDetours
+	url = https://github.com/KNSoft/KNSoft.SlimDetours.git
