@@ -65,3 +65,18 @@
 [submodule "modules/KNSoft.SlimDetours"]
 	path = modules/KNSoft.SlimDetours
 	url = https://github.com/KNSoft/KNSoft.SlimDetours.git
+[submodule "modules/KNSoft.NDK"]
+	path = modules/KNSoft.NDK
+	url = https://github.com/KNSoft/KNSoft.NDK.git
+[submodule "modules/KNSoft.FirmwareSpec"]
+	path = modules/KNSoft.FirmwareSpec
+	url = https://github.com/KNSoft/KNSoft.FirmwareSpec.git
+[submodule "modules/KNSoft.NtCRT"]
+	path = modules/KNSoft.NtCRT
+	url = https://github.com/KNSoft/KNSoft.NtCRT.git
+[submodule "modules/KNSoft.MakeLifeEasier"]
+	path = modules/KNSoft.MakeLifeEasier
+	url = https://github.com/KNSoft/KNSoft.MakeLifeEasier.git
+[submodule "modules/KNSoft.Syscall"]
+	path = modules/KNSoft.Syscall
+	url = https://github.com/KNSoft/KNSoft.Syscall.git
