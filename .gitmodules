@@ -80,3 +80,6 @@
 [submodule "modules/KNSoft.Syscall"]
 	path = modules/KNSoft.Syscall
 	url = https://github.com/KNSoft/KNSoft.Syscall.git
+[submodule "modules/asmjit"]
+	path = modules/asmjit
+	url = https://github.com/asmjit/asmjit.git
