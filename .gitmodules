@@ -83,3 +83,9 @@
 [submodule "modules/asmjit"]
 	path = modules/asmjit
 	url = https://github.com/asmjit/asmjit.git
+[submodule "modules/simdjson"]
+	path = modules/simdjson
+	url = https://github.com/simdjson/simdjson.git
+[submodule "modules/boost"]
+	path = modules/boost
+	url = https://github.com/boostorg/boost.git
