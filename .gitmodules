@@ -89,3 +89,6 @@
 [submodule "modules/boost"]
 	path = modules/boost
 	url = https://github.com/boostorg/boost.git
+[submodule "modules/yaml-cpp"]
+	path = modules/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git
