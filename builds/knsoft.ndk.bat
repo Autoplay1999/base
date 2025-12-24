@@ -6,12 +6,13 @@ set "_dest=..\bin\KNSoft"
 set "_base=..\modules\!_project!"
 set "_output=!_base!\Source\OutDir"
 
+call base
+
 ::if exist !_dest! rd /S /Q "!_dest!"
 if exist !_base! rd /S /Q "!_base!"
 git submodule update --init --recursive !_base! >nul 2>&1
-nuget restore !_base!\Source\!_project!.sln >nul 2>&1
+nuget restore !_base!\Source\!_project!.sln -MSBuildPath "%vs_dir%\MSBuild\Current\bin" >nul 2>&1
 
-call base
 call "!vs_msbuildcmd!" >nul 2>&1
 msbuild !_base!/Source/!_project!.sln -p:Configuration=Release -p:Platform=x64 -t:Clean;Rebuild -v:q >nul 2>&1
 if %ERRORLEVEL% neq 0 goto :EOF

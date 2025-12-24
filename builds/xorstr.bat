@@ -1,5 +1,6 @@
 @echo off
 setlocal EnableDelayedExpansion
+call base
 
 set "_project=xorstr"
 set "_dest=..\bin\!_project!"

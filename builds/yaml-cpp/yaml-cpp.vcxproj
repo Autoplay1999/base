@@ -73,25 +73,25 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)bin\lib\x86\debug\</OutDir>
     <IntDir>$(SolutionDir)bin\tmp\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-  	<IncludePath>$(ProjectDir)../../modules/$(ProjectName)/include;$(IncludePath)</IncludePath>
-  	<TargetName>$(ProjectName)</TargetName>
+    <IncludePath>$(ProjectDir)../../modules/$(ProjectName)/include;$(IncludePath)</IncludePath>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)bin\lib\x86\release\</OutDir>
     <IntDir>$(SolutionDir)bin\tmp\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-  	<IncludePath>$(ProjectDir)../../modules/$(ProjectName)/include;$(IncludePath)</IncludePath>
-  	<TargetName>$(ProjectName)</TargetName>
+    <IncludePath>$(ProjectDir)../../modules/$(ProjectName)/include;$(IncludePath)</IncludePath>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)bin\lib\x64\debug\</OutDir>
     <IntDir>$(SolutionDir)bin\tmp\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-	  <IncludePath>$(ProjectDir)../../modules/$(ProjectName)/include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)../../modules/$(ProjectName)/include;$(IncludePath)</IncludePath>
     <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)bin\lib\x64\release\</OutDir>
     <IntDir>$(SolutionDir)bin\tmp\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-	  <IncludePath>$(ProjectDir)../../modules/$(ProjectName)/include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)../../modules/$(ProjectName)/include;$(IncludePath)</IncludePath>
     <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -106,6 +106,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -127,6 +128,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -146,6 +148,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -167,6 +170,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
