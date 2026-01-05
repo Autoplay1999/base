@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-set "_project=KNSoft.SlimDetours"
+set "_project=KNSoft.Syscall"
 set "_dest=..\bin\KNSoft"
 set "_base=..\modules\!_project!"
 set "_output=!_base!\Source\OutDir"
@@ -22,11 +22,10 @@ msbuild !_base!/Source/!_project!.sln -p:Configuration=Release -p:Platform=x86 -
 if %ERRORLEVEL% neq 0 goto :EOF
 msbuild !_base!/Source/!_project!.sln -p:Configuration=Debug -p:Platform=x86 -t:Clean;Rebuild -v:q >nul 2>&1
 if %ERRORLEVEL% neq 0 goto :EOF
-md "!_dest!\lib\x86\debug" "!_dest!\lib\x64\debug" "!_dest!\lib\x86\release" "!_dest!\lib\x64\release" "!_dest!\include\KNSoft\SlimDetours" >nul 2>&1
+md "!_dest!\lib\x86\debug" "!_dest!\lib\x64\debug" "!_dest!\lib\x86\release" "!_dest!\lib\x64\release" "!_dest!\include\KNSoft\Syscall" >nul 2>&1
 xcopy /S /H /Y /R /I "!_output!\x86\Debug" "!_dest!\lib\x86\debug" >nul 2>&1
 xcopy /S /H /Y /R /I "!_output!\x64\Debug" "!_dest!\lib\x64\debug" >nul 2>&1
 xcopy /S /H /Y /R /I "!_output!\x86\Release" "!_dest!\lib\x86\release" >nul 2>&1
 xcopy /S /H /Y /R /I "!_output!\x64\Release" "!_dest!\lib\x64\release" >nul 2>&1
-xcopy /H /Y /R "!_base!\Source\!_project!\SlimDetours.h" "!_dest!\include\KNSoft\SlimDetours" >nul 2>&1
-xcopy /H /Y /R "!_base!\Source\!_project!\SlimDetours.inl" "!_dest!\include\KNSoft\SlimDetours" >nul 2>&1
-xcopy /H /Y /R "!_base!\Source\!_project!\SlimDetours.NDK.inl" "!_dest!\include\KNSoft\SlimDetours" >nul 2>&1
+xcopy /H /Y /R "!_base!\Source\!_project!\Syscall.h" "!_dest!\include\KNSoft\Syscall" >nul 2>&1
+xcopy /H /Y /R "!_base!\Source\!_project!\Syscall.Thunks.h" "!_dest!\include\KNSoft\Syscall" >nul 2>&1
