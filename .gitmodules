@@ -56,9 +56,6 @@
 	path = modules/imgui/win98/imgui
 	url = https://github.com/Autoplay1999/imgui.git
 	branch = external/win98
-[submodule "modules/xorstr2"]
-	path = modules/xorstr2
-	url = https://github.com/qis/xorstr.git
 [submodule "modules/zydis"]
 	path = modules/zydis
 	url = https://github.com/zyantific/zydis.git
@@ -92,3 +89,12 @@
 [submodule "modules/yaml-cpp"]
 	path = modules/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "modules/obfuscxx"]
+	path = modules/obfuscxx
+	url = https://github.com/nevergiveup-c/obfuscxx
+[submodule "modules/Obfuscate"]
+	path = modules/Obfuscate
+	url = https://github.com/adamyaxley/Obfuscate
+[submodule "modules/obfusheader.h"]
+	path = modules/obfusheader.h
+	url = https://github.com/ac3ss0r/obfusheader.h
