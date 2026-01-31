@@ -1,19 +1,40 @@
 @echo off
 call :%*
-exit /b
+if errorlevel 1 exit /b 1
+exit /b 0
+
+:: --- Logging Functions ---
+
+:LogInfo
+    echo %CLR_CYAN%[INFO]%CLR_RESET% %~1
+    exit /b 0
+
+:LogSuccess
+    echo %CLR_GREEN%[SUCCESS]%CLR_RESET% %~1
+    exit /b 0
+
+:LogWarning
+    echo %CLR_YELLOW%[WARNING]%CLR_RESET% %~1
+    exit /b 0
+
+:LogError
+    echo %CLR_RED%[ERROR]%CLR_RESET% %~1
+    exit /b 0
+
+:: --- Build Functions ---
 
 :UpdateSubmodule
     set "_module_path=%~1"
-    if exist "%_module_path%" rd /S /Q "%_module_path%"
-    git submodule update --init --recursive "%_module_path%" >nul 2>&1
+    git submodule update --init --recursive --force "%_module_path%" >nul 2>&1
     if errorlevel 1 (
-        echo [ERROR] Failed to update submodule: %_module_path%
+        call :LogError "Failed to update submodule: %_module_path%"
         exit /b 1
     )
     exit /b 0
 
 :PrepareDest
     set "_dest_path=%~1"
+    set "_dest_path=%_dest_path:/=\%"
     if exist "%_dest_path%" rd /S /Q "%_dest_path%"
     md "%_dest_path%" >nul 2>&1
     exit /b 0
@@ -22,15 +43,19 @@ exit /b
     set "_src=%~1"
     set "_dst=%~2"
     set "_pat=%~3"
+    set "_src=%_src:/=\%"
+    set "_dst=%_dst:/=\%"
     if "%_pat%"=="" set "_pat=*.*"
     if not exist "%_dst%" md "%_dst%" >nul 2>&1
-    xcopy /H /Y /R "%_src%/%_pat%" "%_dst%/" >nul 2>&1
+    xcopy /H /Y /R "%_src%\%_pat%" "%_dst%\" >nul 2>&1
     exit /b 0
 
 :CopyRecursive
     set "_src=%~1"
     set "_dst=%~2"
-    xcopy /S /H /Y /R /I "%_src%" "%_dst%/" >nul 2>&1
+    set "_src=%_src:/=\%"
+    set "_dst=%_dst:/=\%"
+    xcopy /S /H /Y /R /I "%_src%" "%_dst%\" >nul 2>&1
     exit /b 0
 
 :MSBuild
@@ -38,9 +63,11 @@ exit /b
     set "_conf=%~2"
     set "_plat=%~3"
     set "_extra=%~4"
-    msbuild "%_proj%" -p:Configuration="%_conf%" -p:Platform="%_plat%" %_extra% -t:Clean;Rebuild -v:q >nul 2>&1
+    
+    msbuild "%_proj%" -p:Configuration="%_conf%" -p:Platform="%_plat%" %_extra% -t:Clean;Rebuild -v:q /nodeReuse:false >nul 2>&1
     if errorlevel 1 (
-        echo [ERROR] MSBuild failed for %_proj% (%_conf%|%_plat%)
+        call :LogError "MSBuild failed for %_proj% [%_conf% - %_plat%]. Retrying with output..."
+        msbuild "%_proj%" -p:Configuration="%_conf%" -p:Platform="%_plat%" %_extra% -t:Clean;Rebuild /nodeReuse:false
         exit /b 1
     )
     exit /b 0
@@ -64,11 +91,10 @@ exit /b
     exit /b 0
 
 :NuGetRestore
-    :: Usage: call utils NuGetRestore "solution.sln"
     set "_sln=%~1"
     nuget restore "%_sln%" -MSBuildPath "%vs_dir%\MSBuild\Current\bin" >nul 2>&1
     if errorlevel 1 (
-        echo [ERROR] NuGet restore failed for %_sln%
+        call :LogError "NuGet restore failed for %_sln%"
         exit /b 1
     )
     exit /b 0

@@ -12,6 +12,9 @@ call utils CopyRecursive "../modules/yaml-cpp/include" "../bin/yaml-cpp/include"
 
 if exist "yaml-cpp/bin" rd /S /Q "yaml-cpp/bin"
 
-:: Apply Patch
-sed -i "/#define DLL_H_/a \
-#define YAML_CPP_STATIC_DEFINE" "../bin/yaml-cpp/include/yaml-cpp/dll.h" >nul 2>&1
+echo [INFO] Patching dll.h...
+set "_target=../bin/yaml-cpp/include/yaml-cpp/dll.h"
+if exist "!_target!" (
+    sed -i "/#define DLL_H_/a \#define YAML_CPP_STATIC_DEFINE" "!_target!"
+)
+

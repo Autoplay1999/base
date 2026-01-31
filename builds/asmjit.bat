@@ -4,6 +4,9 @@ call base
 call utils UpdateSubmodule "../modules/asmjit"
 call utils PrepareDest "../bin/asmjit"
 
+:: Activate VS Environment (for CMake, etc.)
+call "!vs_devcmd!" -no_logo >nul 2>&1
+
 set "_base=../modules/asmjit"
 set "_build=!_base!/build"
 set "_cmake_args=-DASMJIT_TEST=OFF -DASMJIT_STATIC=ON -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded"
