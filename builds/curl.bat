@@ -1,42 +1,34 @@
 @echo off
 setlocal EnableDelayedExpansion
-
-set "_project=curl"
-set "_output=!_project!\bin"
-set "_dest=..\bin\!_project!"
-set "_base=..\modules\!_project!"
-set "_build=!_dest!\_!_project!"
-
-set RTLIBCFG=static
-set WINBUILD_ACKNOWLEDGE_DEPRECATED=yes
-
-if exist !_dest! rd /S /Q "!_dest!"
-if exist !_base! rd /S /Q "!_base!"
-git submodule update --init --recursive !_base!  >nul 2>&1
-pushd !_base!
-git checkout curl-8_16_0
-popd
-
 call base
-md "!_dest!\lib" "!_dest!\include\!_project!" 2>nul
-xcopy /S /H /Y /R /I "!_base!" "!_build!" >nul 2>&1
-pushd "!_build!\winbuild"
-call "!vs_vcvar64!" >nul 2>&1
-nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=yes GEN_PDB=yes MACHINE=x64 >nul 2>&1
-if %ERRORLEVEL% neq 0 goto :eof
-nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=no GEN_PDB=no MACHINE=x64 >nul 2>&1
-if %ERRORLEVEL% neq 0 goto :eof
-call "!vs_vcvar32!" >nul 2>&1
-nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=yes GEN_PDB=yes MACHINE=x86 >nul 2>&1
-if %ERRORLEVEL% neq 0 goto :eof
-nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=no GEN_PDB=no MACHINE=x86 >nul 2>&1
-if %ERRORLEVEL% neq 0 goto :eof
+call utils UpdateSubmodule "../modules/curl"
+call utils PrepareDest "../bin/curl"
+
+set "_base=../modules/curl"
+set "_build=../bin/curl/_curl"
+
+pushd "!_base!"
+    git checkout curl-8_16_0 >nul 2>&1
 popd
-pushd "!_build!\builds"
-xcopy /S /H /Y /R /I  "libcurl-vc-x64-debug-static-ipv6-sspi-schannel\lib" "..\..\lib\x64\" >nul 2>&1
-xcopy /S /H /Y /R /I  "libcurl-vc-x64-release-static-ipv6-sspi-schannel\lib" "..\..\lib\x64\" >nul 2>&1
-xcopy /S /H /Y /R /I  "libcurl-vc-x86-debug-static-ipv6-sspi-schannel\lib" "..\..\lib\x86\" >nul 2>&1
-xcopy /S /H /Y /R /I  "libcurl-vc-x86-release-static-ipv6-sspi-schannel\lib" "..\..\lib\x86\" >nul 2>&1
-xcopy /H /Y /R  "..\include\!_project!\*.h" "..\..\include\!_project!\" >nul 2>&1
+
+call utils CopyRecursive "!_base!" "!_build!"
+
+pushd "!_build!/winbuild"
+    call "!vs_vcvar64!" >nul 2>&1
+    nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=yes GEN_PDB=yes MACHINE=x64 >nul 2>&1 || (popd & exit /b 1)
+    nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=no GEN_PDB=no MACHINE=x64 >nul 2>&1 || (popd & exit /b 1)
+    
+    call "!vs_vcvar32!" >nul 2>&1
+    nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=yes GEN_PDB=yes MACHINE=x86 >nul 2>&1 || (popd & exit /b 1)
+    nmake /f Makefile.vc RTLIBCFG=static mode=static DEBUG=no GEN_PDB=no MACHINE=x86 >nul 2>&1 || (popd & exit /b 1)
 popd
+
+set "_out=!_build!/builds"
+call utils CopyRecursive "!_out!/libcurl-vc-x64-debug-static-ipv6-sspi-schannel/lib" "../bin/curl/lib/x64"
+call utils CopyRecursive "!_out!/libcurl-vc-x64-release-static-ipv6-sspi-schannel/lib" "../bin/curl/lib/x64"
+call utils CopyRecursive "!_out!/libcurl-vc-x86-debug-static-ipv6-sspi-schannel/lib" "../bin/curl/lib/x86"
+call utils CopyRecursive "!_out!/libcurl-vc-x86-release-static-ipv6-sspi-schannel/lib" "../bin/curl/lib/x86"
+
+call utils CopyHeaders "!_build!/include/curl" "../bin/curl/include/curl" "*.h"
+
 rd /S /Q "!_build!" >nul 2>&1

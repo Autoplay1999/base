@@ -1,30 +1,23 @@
 @echo off
 setlocal EnableDelayedExpansion
-
-set "_project=KNSoft.NDK"
-set "_dest=..\bin\KNSoft"
-set "_base=..\modules\!_project!"
-set "_output=!_base!\Source\OutDir"
-
 call base
+call utils UpdateSubmodule "../modules/KNSoft.NDK"
+call utils PrepareDest "../bin/KNSoft"
 
-::if exist !_dest! rd /S /Q "!_dest!"
-if exist !_base! rd /S /Q "!_base!"
-git submodule update --init --recursive !_base! >nul 2>&1
-nuget restore !_base!\Source\!_project!.sln -MSBuildPath "%vs_dir%\MSBuild\Current\bin" >nul 2>&1
+set "_base=../modules/KNSoft.NDK"
+call utils NuGetRestore "!_base!/Source/KNSoft.NDK.sln"
 
 call "!vs_msbuildcmd!" >nul 2>&1
-msbuild !_base!/Source/!_project!.sln -p:Configuration=Release -p:Platform=x64 -t:Clean;Rebuild -v:q >nul 2>&1
-if %ERRORLEVEL% neq 0 goto :EOF
-msbuild !_base!/Source/!_project!.sln -p:Configuration=Debug -p:Platform=x64 -t:Clean;Rebuild -v:q >nul 2>&1
-if %ERRORLEVEL% neq 0 goto :EOF
-msbuild !_base!/Source/!_project!.sln -p:Configuration=Release -p:Platform=x86 -t:Clean;Rebuild -v:q >nul 2>&1
-if %ERRORLEVEL% neq 0 goto :EOF
-msbuild !_base!/Source/!_project!.sln -p:Configuration=Debug -p:Platform=x86 -t:Clean;Rebuild -v:q >nul 2>&1
-if %ERRORLEVEL% neq 0 goto :EOF
-md "!_dest!\lib\x86\debug" "!_dest!\lib\x64\debug" "!_dest!\lib\x86\release" "!_dest!\lib\x64\release" "!_dest!\include" >nul 2>&1
-xcopy /S /H /Y /R /I "!_output!\x86" "!_dest!\lib\x86\debug" >nul 2>&1
-xcopy /S /H /Y /R /I "!_output!\x64" "!_dest!\lib\x64\debug" >nul 2>&1
-xcopy /S /H /Y /R /I "!_output!\x86" "!_dest!\lib\x86\release" >nul 2>&1
-xcopy /S /H /Y /R /I "!_output!\x64" "!_dest!\lib\x64\release" >nul 2>&1
-xcopy /S /H /Y /R /I  "!_base!\Source\Include" "!_dest!\include" >nul 2>&1
+call utils MSBuildAll "!_base!/Source/KNSoft.NDK.sln" || exit /b 1
+
+set "_out=!_base!/Source/OutDir"
+call utils PrepareDest "../bin/KNSoft/lib/x86/release"
+call utils CopyRecursive "!_out!/x86" "../bin/KNSoft/lib/x86/release"
+call utils PrepareDest "../bin/KNSoft/lib/x64/release"
+call utils CopyRecursive "!_out!/x64" "../bin/KNSoft/lib/x64/release"
+call utils PrepareDest "../bin/KNSoft/lib/x86/debug"
+call utils CopyRecursive "!_out!/x86" "../bin/KNSoft/lib/x86/debug"
+call utils PrepareDest "../bin/KNSoft/lib/x64/debug"
+call utils CopyRecursive "!_out!/x64" "../bin/KNSoft/lib/x64/debug"
+
+call utils CopyRecursive "!_base!/Source/Include" "../bin/KNSoft/include"
