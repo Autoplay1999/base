@@ -1,14 +1,6 @@
 @echo off
 setlocal EnableDelayedExpansion
 call base
-
-set "_project=obfusheader.h"
-set "_dest=..\bin\!_project!"
-set "_base=..\modules\!_project!"
-
-if exist !_dest! rd /S /Q "!_dest!"
-if not exist !_base! git restore !_base!
-
-md "!_dest!\include" >nul 2>&1
-xcopy /H /Y /R "!_base!\include\obfusheader.h" "!_dest!\include\" >nul 2>&1
-
+call utils UpdateSubmodule "..\modules\obfusheader.h"
+call utils PrepareDest "..\bin\obfusheader.h\include"
+call utils CopyHeaders "..\modules\obfusheader.h\include" "..\bin\obfusheader.h\include" "obfusheader.h"

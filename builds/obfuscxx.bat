@@ -1,14 +1,6 @@
 @echo off
 setlocal EnableDelayedExpansion
 call base
-
-set "_project=obfuscxx"
-set "_dest=..\bin\!_project!"
-set "_base=..\modules\!_project!"
-
-if exist !_dest! rd /S /Q "!_dest!"
-if not exist !_base! git restore !_base!
-
-md "!_dest!\include" >nul 2>&1
-xcopy /H /Y /R "!_base!\obfuscxx\include\obfuscxx.h" "!_dest!\include\" >nul 2>&1
-
+call utils UpdateSubmodule "..\modules\obfuscxx"
+call utils PrepareDest "..\bin\obfuscxx\include"
+call utils CopyHeaders "..\modules\obfuscxx\obfuscxx\include" "..\bin\obfuscxx\include" "obfuscxx.h"
