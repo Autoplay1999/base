@@ -19,5 +19,5 @@ call utils CopyRecursive "!_out!/DebugX64" "../bin/zydis/lib/x64/debug"
 call utils CopyRecursive "!_out!/ReleaseX86" "../bin/zydis/lib/x86/release"
 call utils CopyRecursive "!_out!/DebugX86" "../bin/zydis/lib/x86/debug"
 
-call utils CopyRecursive "../modules/zydis/include" "../bin/zydis/include"
-call utils CopyRecursive "../modules/zydis/dependencies/zycore/include" "../bin/zydis/include"
+call utils CopyHeaders "../modules/zydis/include" "../bin/zydis/include"
+call utils CopyHeaders "../modules/zydis/dependencies/zycore/include" "../bin/zydis/include"

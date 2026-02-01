@@ -29,4 +29,4 @@ call utils CopyRecursive "!_build!/x64/release/Release" "../bin/asmjit/lib/x64/r
 call utils PrepareDest "../bin/asmjit/lib/x64/debug"
 call utils CopyRecursive "!_build!/x64/debug/Debug" "../bin/asmjit/lib/x64/debug"
 
-call utils CopyRecursive "!_base!/src/asmjit" "../bin/asmjit/include/asmjit"
+call utils CopyHeaders "!_base!/asmjit" "../bin/asmjit/include/asmjit"

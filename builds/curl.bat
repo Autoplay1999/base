@@ -37,7 +37,7 @@ if errorlevel 1 (
 
 :: Copy Headers
 echo [INFO] Copying headers...
-call utils CopyHeaders "!_base!/include/curl" "../bin/curl/include/curl" "*.h"
+call utils CopyHeaders "!_base!/include/curl" "../bin/curl/include/curl" "*.*"
 
 :: Clean up
 echo [INFO] Cleaning up...

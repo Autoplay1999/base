@@ -47,7 +47,7 @@ exit /b 0
     set "_dst=%_dst:/=\%"
     if "%_pat%"=="" set "_pat=*.*"
     if not exist "%_dst%" md "%_dst%" >nul 2>&1
-    xcopy /H /Y /R "%_src%\%_pat%" "%_dst%\" >nul 2>&1
+    xcopy /S /E /H /Y /R "%_src%\%_pat%" "%_dst%\" >nul 2>&1
     exit /b 0
 
 :CopyRecursive
