@@ -1,6 +1,12 @@
 @echo off
 setlocal EnableDelayedExpansion
-call base
-call utils UpdateSubmodule "..\modules\obfuscxx"
-call utils PrepareDest "..\bin\obfuscxx\include"
-call utils CopyHeaders "..\modules\obfuscxx\obfuscxx\include" "..\bin\obfuscxx\include" "obfuscxx.h"
+cd /d "%~dp0"
+call "%~dp0base"
+call "%~dp0utils" UpdateSubmodule "%~dp0..\modules\obfuscxx"
+call "%~dp0utils" PrepareDest "%~dp0..\bin\obfuscxx"
+
+echo [INFO] Organizing headers...
+call "%~dp0utils" PrepareDest "%~dp0..\bin\obfuscxx\include"
+copy /y "%~dp0..\modules\obfuscxx\obfuscxx\include\obfuscxx.h" "%~dp0..\bin\obfuscxx\include\" >nul
+
+echo [SUCCESS] obfuscxx build completed successfully.

@@ -1,5 +1,5 @@
 @echo off
-:: God Tier Base Configuration
+:: Base Configuration
 :: Auto-detects Visual Studio, configures environment and colors.
 
 setlocal EnableDelayedExpansion
@@ -49,6 +49,7 @@ endlocal & (
 )
 
 call :setPath git ..\usr\bin
+set "PATH=%~dp0;%PATH%"
 goto :eof
 
 :: -----------------------------------------------------------------------------

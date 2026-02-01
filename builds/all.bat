@@ -7,7 +7,7 @@ call base
 set "_logs=..\logs"
 if not exist "%_logs%" md "%_logs%" >nul 2>&1
 
-set "_modules=zlib curl imgui json lazy_importer neargye.magic_enum neargye.nameof neargye.semver neargye.yacppl neargye.scope_guard nirvana phnt tinycc turbo_base64 vmp xorstr obfuscate obfuscxx obfusheader.h zydis knsoft.ndk knsoft.slimdetours knsoft.syscall asmjit simdjson yaml-cpp"
+set "_modules=luajit zlib curl imgui json lazy_importer neargye.magic_enum neargye.nameof neargye.semver neargye.yacppl neargye.scope_guard nirvana phnt tinycc turbo_base64 vmp xorstr obfuscate obfuscxx obfusheader.h zydis knsoft.ndk knsoft.slimdetours knsoft.syscall asmjit simdjson yaml-cpp"
 
 :: --- Start ---
 echo %CLR_CYAN%==============================================================%CLR_RESET%

@@ -1,0 +1,25 @@
+diff --git a/src/msvcbuild.bat b/src/msvcbuild.bat
+index e0df88bc..6fcdf023 100644
+--- a/src/msvcbuild.bat
++++ b/src/msvcbuild.bat
+@@ -14,10 +14,10 @@
+ 
+ @if not defined INCLUDE goto :FAIL
+ 
+-@setlocal
++@setlocal EnableDelayedExpansion
+ @rem Add more debug flags here, e.g. DEBUGCFLAGS=/DLUA_USE_ASSERT
+ @set DEBUGCFLAGS=
+-@set LJCOMPILE=cl /nologo /c /O2 /W3 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_STDIO_INLINE=__declspec(dllexport)__inline
++@if not defined LJCOMPILE set LJCOMPILE=cl /nologo /c /O2 /W3 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_STDIO_INLINE=__declspec(dllexport)__inline
+ @set LJDYNBUILD=/DLUA_BUILD_AS_DLL /MD
+ @set LJDYNBUILD_DEBUG=/DLUA_BUILD_AS_DLL /MDd
+ @set LJCOMPILETARGET=/Zi
+@@ -102,6 +102,7 @@ buildvm -m folddef -o lj_folddef.h lj_opt_fold.c
+ @set LJCOMPILE=%LJCOMPILE% %DEBUGCFLAGS%
+ @set LJDYNBUILD=%LJDYNBUILD_DEBUG%
+ @set LJLINKTYPE=%LJLINKTYPE_DEBUG%
++@set LJCOMPILE=!LJCOMPILE:/O2=!
+ :NODEBUG
+ @set LJCOMPILE=%LJCOMPILE% %LJCOMPILETARGET%
+ @set LJLINK=%LJLINK% %LJLINKTYPE% %LJLINKTARGET%

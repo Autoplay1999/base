@@ -1,23 +1,57 @@
 @echo off
 setlocal EnableDelayedExpansion
-call base
-call utils UpdateSubmodule "../modules/zydis"
-call utils PrepareDest "../bin/zydis"
+call "%~dp0base"
+call "%~dp0utils" UpdateSubmodule "%~dp0..\modules\zydis"
+call "%~dp0utils" PrepareDest "%~dp0..\bin\zydis"
 
-set "_sln=../modules/zydis/msvc/zydis.sln"
-set "_targets=-t:Zycore:Clean;Zycore:Rebuild;Zydis:Clean;Zydis:Rebuild"
+:: Activate VS Environment
+call "!vs_devcmd!" -no_logo >nul 2>&1
 
-call "!vs_msbuildcmd!" >nul 2>&1
-call utils MSBuild "!_sln!" "Release MT" "x64" "!_targets!" || exit /b 1
-call utils MSBuild "!_sln!" "Debug MT" "x64" "!_targets!" || exit /b 1
-call utils MSBuild "!_sln!" "Release MT" "x86" "!_targets!" || exit /b 1
-call utils MSBuild "!_sln!" "Debug MT" "x86" "!_targets!" || exit /b 1
+set "_base=%~dp0..\modules\zydis"
+set "_bin=%~dp0..\bin\zydis"
 
-set "_out=../modules/zydis/msvc/bin"
-call utils CopyRecursive "!_out!/ReleaseX64" "../bin/zydis/lib/x64/release"
-call utils CopyRecursive "!_out!/DebugX64" "../bin/zydis/lib/x64/debug"
-call utils CopyRecursive "!_out!/ReleaseX86" "../bin/zydis/lib/x86/release"
-call utils CopyRecursive "!_out!/DebugX86" "../bin/zydis/lib/x86/debug"
+:: Standard Flags + Exclude targets
+set "_common_args=-DZYDIS_BUILD_EXAMPLES=OFF -DZYDIS_BUILD_TOOLS=OFF -DZYDIS_BUILD_TESTS=OFF -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF -DCMAKE_CXX_FLAGS="/GR- /EHsc" -DCMAKE_C_FLAGS="/GR-""
 
-call utils CopyHeaders "../modules/zydis/include" "../bin/zydis/include"
-call utils CopyHeaders "../modules/zydis/dependencies/zycore/include" "../bin/zydis/include"
+:: x86 Release
+echo [INFO] Building zydis [x86/Release]...
+set "_build=%_base%\build\x86\release"
+cmake "%_base%" -B "%_build%" -G"Visual Studio 17 2022" -A "Win32" !_common_args! -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded || exit /b 1
+cmake --build "%_build%" --config "Release" --target Zydis -- -m || exit /b 1
+call "%~dp0utils" PrepareDest "%_bin%\lib\x86\release"
+call "%~dp0utils" CopyRecursive "%_build%\Release" "%_bin%\lib\x86\release"
+copy /y "%_build%\zycore\Release\Zycore.lib" "%_bin%\lib\x86\release\" >nul
+
+:: x86 Debug
+echo [INFO] Building zydis [x86/Debug]...
+set "_build=%_base%\build\x86\debug"
+cmake "%_base%" -B "%_build%" -G"Visual Studio 17 2022" -A "Win32" !_common_args! -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebug || exit /b 1
+cmake --build "%_build%" --config "Debug" --target Zydis -- -m || exit /b 1
+call "%~dp0utils" PrepareDest "%_bin%\lib\x86\debug"
+call "%~dp0utils" CopyRecursive "%_build%\Debug" "%_bin%\lib\x86\debug"
+copy /y "%_build%\zycore\Debug\Zycore.lib" "%_bin%\lib\x86\debug\" >nul
+
+:: x64 Release
+echo [INFO] Building zydis [x64/Release]...
+set "_build=%_base%\build\x64\release"
+cmake "%_base%" -B "%_build%" -G"Visual Studio 17 2022" -A "x64" !_common_args! -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded || exit /b 1
+cmake --build "%_build%" --config "Release" --target Zydis -- -m || exit /b 1
+call "%~dp0utils" PrepareDest "%_bin%\lib\x64\release"
+call "%~dp0utils" CopyRecursive "%_build%\Release" "%_bin%\lib\x64\release"
+copy /y "%_build%\zycore\Release\Zycore.lib" "%_bin%\lib\x64\release\" >nul
+
+:: x64 Debug
+echo [INFO] Building zydis [x64/Debug]...
+set "_build=%_base%\build\x64\debug"
+cmake "%_base%" -B "%_build%" -G"Visual Studio 17 2022" -A "x64" !_common_args! -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebug || exit /b 1
+cmake --build "%_build%" --config "Debug" --target Zydis -- -m || exit /b 1
+call "%~dp0utils" PrepareDest "%_bin%\lib\x64\debug"
+call "%~dp0utils" CopyRecursive "%_build%\Debug" "%_bin%\lib\x64\debug"
+copy /y "%_build%\zycore\Debug\Zycore.lib" "%_bin%\lib\x64\debug\" >nul
+
+echo [INFO] Copying headers...
+call "%~dp0utils" PrepareDest "%_bin%\include"
+call "%~dp0utils" CopyHeaders "%_base%\include" "%_bin%\include" "*.h"
+call "%~dp0utils" CopyHeaders "%_base%\dependencies\zycore\include" "%_bin%\include" "*.h"
+
+echo [SUCCESS] zydis build completed successfully.

@@ -92,9 +92,22 @@ exit /b 0
 
 :NuGetRestore
     set "_sln=%~1"
+    call :DownloadNuGet || exit /b 1
     nuget restore "%_sln%" -MSBuildPath "%vs_dir%\MSBuild\Current\bin" >nul 2>&1
     if errorlevel 1 (
         call :LogError "NuGet restore failed for %_sln%"
         exit /b 1
     )
     exit /b 0
+
+:DownloadNuGet
+    if exist "nuget.exe" exit /b 0
+    echo %CLR_CYAN%[INFO]%CLR_RESET% nuget.exe not found. Downloading latest version...
+    powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://dist.nuget.org/win-x86-commandline/latest/nuget.exe' -OutFile 'nuget.exe'" >nul 2>&1
+    if errorlevel 1 (
+        call :LogError "Failed to download nuget.exe"
+        exit /b 1
+    )
+    call :LogSuccess "nuget.exe downloaded."
+    exit /b 0
+
