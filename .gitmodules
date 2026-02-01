@@ -98,3 +98,9 @@
 [submodule "modules/obfusheader.h"]
 	path = modules/obfusheader.h
 	url = https://github.com/ac3ss0r/obfusheader.h
+[submodule "modules/luajit"]
+	path = modules/luajit
+	url = https://luajit.org/git/luajit.git
+[submodule "modules/v8"]
+	path = modules/v8
+	url = https://chromium.googlesource.com/v8/v8.git
