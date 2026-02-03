@@ -71,9 +71,6 @@
 [submodule "modules/KNSoft.NtCRT"]
 	path = modules/KNSoft.NtCRT
 	url = https://github.com/KNSoft/KNSoft.NtCRT.git
-[submodule "modules/KNSoft.MakeLifeEasier"]
-	path = modules/KNSoft.MakeLifeEasier
-	url = https://github.com/KNSoft/KNSoft.MakeLifeEasier.git
 [submodule "modules/KNSoft.Syscall"]
 	path = modules/KNSoft.Syscall
 	url = https://github.com/KNSoft/KNSoft.Syscall.git
@@ -83,9 +80,6 @@
 [submodule "modules/simdjson"]
 	path = modules/simdjson
 	url = https://github.com/simdjson/simdjson.git
-[submodule "modules/boost"]
-	path = modules/boost
-	url = https://github.com/boostorg/boost.git
 [submodule "modules/yaml-cpp"]
 	path = modules/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
@@ -104,3 +98,6 @@
 [submodule "modules/v8"]
 	path = modules/v8
 	url = https://chromium.googlesource.com/v8/v8.git
+[submodule "modules/KNSoft.MakeLifeEasier"]
+	path = modules/KNSoft.MakeLifeEasier
+	url = https://github.com/KNSoft/KNSoft.MakeLifeEasier.git
