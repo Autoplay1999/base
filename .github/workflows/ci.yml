@@ -2,6 +2,11 @@ name: CI
 
 on:
   workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: 'Specify the Commit SHA to run (leave empty to use the latest)'
+        required: false
+        default: ''
   push:
     branches: [ "main", "master" ]
     tags: [ "v*" ]
