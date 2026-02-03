@@ -22,8 +22,13 @@ jobs:
     steps:
     - uses: actions/checkout@v6
       with:
-        submodules: recursive
+        # submodules: recursive - Removed to handle dumb http transport manually
         fetch-depth: 0
+    
+    - name: Checkout Submodules
+      run: |
+        git submodule sync
+        git submodule update --init --recursive --force
     
     - name: Set up Python
       uses: actions/setup-python@v6
