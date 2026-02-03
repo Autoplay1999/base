@@ -25,9 +25,6 @@
 [submodule "modules/xorstr"]
 	path = modules/xorstr
 	url = https://github.com/JustasMasiulis/xorstr.git
-[submodule "modules/nirvana"]
-	path = modules/nirvana
-	url = https://github.com/Autoplay1999/nirvana.git
 [submodule "modules/lazy_importer"]
 	path = modules/lazy_importer
 	url = https://github.com/JustasMasiulis/lazy_importer.git

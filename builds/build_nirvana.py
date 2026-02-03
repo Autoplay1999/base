@@ -18,8 +18,21 @@ def main():
         utils.Logger.info(f"  {PRJ_NAME} Build System")
         utils.Logger.info("=" * 60)
 
-        # 1. Update Submodule
-        utils.update_submodule(NIRVANA_MODULE)
+        # 1. Update/Clone Repository (Manual Management)
+        REPO_URL = "https://github.com/Autoplay1999/nirvana.git"
+        if not NIRVANA_MODULE.exists():
+            utils.Logger.info(f"[{PRJ_NAME}] Cloning repository...")
+            utils.run_process(["git", "clone", REPO_URL, str(NIRVANA_MODULE)], cwd=MODULES_DIR)
+        else:
+             # Verify it's a git repo before pulling
+            if (NIRVANA_MODULE / ".git").exists():
+                utils.Logger.info(f"[{PRJ_NAME}] Updating repository...")
+                # Fix detached HEAD: Fetch -> Checkout main -> Pull
+                utils.run_process(["git", "fetch", "origin"], cwd=NIRVANA_MODULE)
+                utils.run_process(["git", "checkout", "main"], cwd=NIRVANA_MODULE)
+                utils.run_process(["git", "pull", "origin", "main"], cwd=NIRVANA_MODULE)
+            else:
+                 utils.Logger.warn(f"[{PRJ_NAME}] Directory exists but is not a git repo. Skipping update.")
         
         # 2. Check rebuild
         sources = [NIRVANA_MODULE, Path(__file__)]
@@ -34,7 +47,7 @@ def main():
         
         utils.ensure_dir(dst_inc)
         utils.clean_dir(dst_inc)
-        utils.copy_files(NIRVANA_MODULE / "nirvana", dst_inc, "*.h", recursive=True)
+        utils.copy_files(NIRVANA_MODULE, dst_inc, "*.h", recursive=True)
 
         # 4. Finalize
         utils.write_build_token(token_dir, sources)
