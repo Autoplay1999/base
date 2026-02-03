@@ -93,6 +93,9 @@ def build_module(name: str, rel_path: str, project_file: str, header_pkg: str = 
                     if out_dir.exists():
                         for f in out_dir.glob("*"):
                             if f.suffix.lower() in [".lib", ".pdb"]:
+                                # Ref: USR-REQ-NO-SMBIOS-PDB
+                                if f.name.lower() == "smbiosdecode.pdb":
+                                    continue
                                 shutil.copy2(f, lib_dst / f.name)
                                 found = True
                     
