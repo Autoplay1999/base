@@ -140,11 +140,17 @@ def main() -> None:
         utils.clean_dir(inc_dst)
         
         # Zydis headers
-        zydis_inc: Path = ZYDIS_MODULE / "include"
-        utils.copy_files(zydis_inc, inc_dst, "*.h")
+        # Zydis headers
+        zydis_inc: Path = ZYDIS_MODULE / "include" / "Zydis"
+        dst_inc_zydis: Path = inc_dst / "Zydis"
+        
+        # Copy main Zydis headers (e.g., Zydis.h, Decoder.h)
+        utils.copy_files(zydis_inc, dst_inc_zydis, "*.h")
+        
+        # Copy subdirectories
         for sub in ["Generated", "Internal"]:
-            if (zydis_inc / "Zydis" / sub).exists():
-                utils.copy_files(zydis_inc / "Zydis" / sub, inc_dst / "Zydis" / sub, "*.h")
+            if (zydis_inc / sub).exists():
+                utils.copy_files(zydis_inc / sub, dst_inc_zydis / sub, "*.h")
         
         # Zycore headers (nested in dependencies)
         zycore_inc: Path = ZYDIS_MODULE / "dependencies" / "zycore" / "include"
