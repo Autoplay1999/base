@@ -25,7 +25,6 @@ MODULES = [
     
     # Complex Migration Scripts
     ("ImGui", "build_imgui.py"),
-    ("XorStr", "build_xorstr.py"),
     ("KNSoft", "build_knsoft.py"),
 ]
 
@@ -130,7 +129,6 @@ def run_build():
         ("Headers-Only Libs", "build_headers_libs.py"),
         ("CMake Libs", "build_cmake_libs.py"),
         ("ImGui", "build_imgui.py"),
-        ("XorStr", "build_xorstr.py"),
         ("KNSoft", "build_knsoft.py"),
     ]
 

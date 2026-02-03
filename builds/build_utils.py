@@ -454,9 +454,20 @@ def calculate_hash(sources: List[Union[str, Path]]) -> str:
     for s in sorted(sources):
         p = Path(s)
         if p.is_file():
+            # Exclude .git file (common in submodules)
+            if p.name == ".git":
+                continue
             hasher.update(p.read_bytes())
         elif p.is_dir():
+            # Exclude metadata and build directories
+            if p.name in [".git", ".vs", "build", "out", "bin"]:
+                continue
             for f in sorted(p.rglob('*')):
+                # Filter out excluded generic folders during traversal
+                # strict check on parts to catch nested build/ folders
+                parts = set(f.parts)
+                if any(x in parts for x in [".git", ".vs", "build", "out", "bin"]):
+                    continue
                 if f.is_file():
                     hasher.update(f.read_bytes())
         hasher.update(str(p).encode())
@@ -464,7 +475,7 @@ def calculate_hash(sources: List[Union[str, Path]]) -> str:
 
 def check_build_needed(sources: List[Union[str, Path]], token_file: Path, clean_on_rebuild_path: Optional[Path] = None) -> bool:
     if not token_file.exists():
-        Logger.detail("Rebuild needed: Validation token missing (.valid)")
+        Logger.detail(f"Rebuild needed: Validation token missing (.valid) at {token_file}")
         return True
     
     current_hash = calculate_hash(sources)
@@ -472,6 +483,8 @@ def check_build_needed(sources: List[Union[str, Path]], token_file: Path, clean_
         saved_hash = token_file.read_text().strip()
         if current_hash != saved_hash:
             Logger.detail(f"Rebuild needed: Content changes detected (Hash mismatch)")
+            Logger.detail(f"   Saved:   {saved_hash}")
+            Logger.detail(f"   Current: {current_hash}")
             
             # Auto-Clean Logic (Ref: USR-REQ-AUTO-CLEAN)
             # If a previous build exists (indicated by token_file) but hash changed, 
@@ -481,9 +494,12 @@ def check_build_needed(sources: List[Union[str, Path]], token_file: Path, clean_
                 clean_dir(clean_on_rebuild_path)
                 
             return True
-    except:
+        else:
+            # Valid match
+            return False
+    except Exception as e:
+        Logger.warn(f"Rebuild needed: Token check exception: {e}")
         return True
-    return False
 
 def write_build_token(target_dir: Path, sources: List[Union[str, Path]]):
     """Writes a validation token to mark a successful build."""
