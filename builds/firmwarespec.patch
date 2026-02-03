@@ -1,0 +1,26 @@
+diff --git a/TypeInfoGenerator/TypeInfoGenerator.csproj b/TypeInfoGenerator/TypeInfoGenerator.csproj
+index 645e998..6e94cc0 100644
+--- a/TypeInfoGenerator/TypeInfoGenerator.csproj
++++ b/TypeInfoGenerator/TypeInfoGenerator.csproj
+@@ -2,7 +2,7 @@
+ 
+   <PropertyGroup>
+     <OutputType>Exe</OutputType>
+-    <TargetFramework>net9.0</TargetFramework>
++    <TargetFramework>net10.0</TargetFramework>
+     <ImplicitUsings>disable</ImplicitUsings>
+     <Nullable>disable</Nullable>
+   </PropertyGroup>
+diff --git a/VSProject/SmbiosDecode.Build.targets b/VSProject/SmbiosDecode.Build.targets
+index 8a0f49d..aae06af 100644
+--- a/VSProject/SmbiosDecode.Build.targets
++++ b/VSProject/SmbiosDecode.Build.targets
+@@ -11,6 +11,6 @@
+ 
+     <Message Importance = "High"
+              Text       = "Generating SMBIOS type information for SMBIOS.h ..." />
+-    <Exec Command="$(MSBuildProjectDirectory)\..\TypeInfoGenerator\bin\$(Configuration)\net9.0\TypeInfoGenerator.exe &quot;$(MSBuildProjectDirectory)\..\SMBIOS.h&quot;" />
++    <Exec Command="$(MSBuildProjectDirectory)\..\TypeInfoGenerator\bin\$(Configuration)\net10.0\TypeInfoGenerator.exe &quot;$(MSBuildProjectDirectory)\..\SMBIOS.h&quot;" />
+   </Target>
+ </Project>
+\ No newline at end of file
