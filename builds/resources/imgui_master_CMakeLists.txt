@@ -1,0 +1,56 @@
+cmake_minimum_required(VERSION 3.10)
+project(imgui)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Source files for core ImGui
+set(IMGUI_SOURCES
+    imgui.cpp
+    imgui_demo.cpp
+    imgui_draw.cpp
+    imgui_tables.cpp
+    imgui_widgets.cpp
+)
+
+# Backends to include (Win32, DirectX 9, DirectX 11)
+set(BACKEND_SOURCES
+    backends/imgui_impl_win32.cpp
+    backends/imgui_impl_dx9.cpp
+    backends/imgui_impl_dx11.cpp
+)
+
+# Miscellaneous additions
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/misc/cpp/imgui_stdlib.cpp")
+    list(APPEND IMGUI_SOURCES misc/cpp/imgui_stdlib.cpp)
+endif()
+
+# Main library target
+add_library(imgui STATIC ${IMGUI_SOURCES})
+
+# Backend targets (optional, but requested by some setups)
+add_library(imgui_win32 STATIC backends/imgui_impl_win32.cpp)
+add_library(imgui_dx9 STATIC backends/imgui_impl_dx9.cpp)
+add_library(imgui_dx11 STATIC backends/imgui_impl_dx11.cpp)
+
+# Include directories
+target_include_directories(imgui PUBLIC .)
+target_include_directories(imgui PUBLIC backends)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/misc/cpp")
+    target_include_directories(imgui PUBLIC misc/cpp)
+endif()
+
+# Link dependencies for backends if needed
+# (Assuming standard Windows libraries for Win32/DX)
+
+# MSVC Optimizations and settings
+if(MSVC)
+    target_compile_options(imgui PRIVATE /MP /EHsc)
+    target_compile_definitions(imgui PUBLIC IMGUI_USER_CONFIG="imconfig.h")
+    
+    # Ensure backends also have the same settings
+    foreach(lib imgui_win32 imgui_dx9 imgui_dx11)
+        target_include_directories(${lib} PUBLIC . backends)
+        target_compile_options(${lib} PRIVATE /MP /EHsc)
+    endforeach()
+endif()
