@@ -579,15 +579,52 @@ def apply_patch(repo_path: Path, patch_file: Path) -> bool:
             return False
 
 def run_nuget_restore(solution_path: Path):
-
-    """Restores NuGet packages for a solution."""
-    nuget_exe = BUILDS_DIR / "nuget.exe"
-    if not nuget_exe.exists():
-        Logger.warn("nuget.exe not found, skipping restore.")
-        return
-    
+    """Restores NuGet packages using MSBuild (preferred) or NuGet CLI."""
     Logger.info(f"Restoring NuGet packages for {solution_path.name}...")
-    run_process([str(nuget_exe), "restore", str(solution_path)])
+    
+    # Method 1: Try MSBuild /t:restore (Modern standard)
+    # Use BuildEnv to get msbuild path, but here we can't easily instantiate it without circular import issues 
+    # if not careful, but BuildEnv is lightweight.
+    try:
+        env_manager = BuildEnv()
+        msbuild_path = env_manager.msbuild_path
+        if msbuild_path and msbuild_path.exists():
+            Logger.detail("Attempting restore via MSBuild...")
+            # /p:RestorePackagesConfig=true is needed for packages.config projects in some cases
+            cmd = [str(msbuild_path), str(solution_path), "/t:restore", "/p:RestorePackagesConfig=true", "/v:m"]
+            utils = sys.modules[__name__] # Hack to reach self module reference if needed, but we are in the module
+            # We are inside build_utils, so we can just run_process
+            run_process(cmd)
+            return
+    except Exception as e:
+         Logger.verbose(f"MSBuild restore failed: {e}")
+
+    # Method 2: NuGet CLI (PATH)
+    try:
+        Logger.detail("Attempting restore via NuGet CLI (PATH)...")
+        run_process(["nuget", "restore", str(solution_path)])
+        return
+    except Exception:
+        pass
+        
+    # Method 3: Local tool fallback
+    nuget_exe = BUILDS_DIR / "nuget.exe"
+    
+    # Auto-download if missing (Ref: USR-REQ-AUTO-DOWNLOAD)
+    if not nuget_exe.exists():
+        Logger.info("nuget.exe not found. Downloading...")
+        try:
+             # Use curl (standard on Windows 10+)
+             url = "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
+             run_process(["curl", "-L", "-o", str(nuget_exe), url])
+             Logger.success(f"Downloaded nuget.exe to {nuget_exe}")
+        except Exception as e:
+             Logger.warn(f"Failed to download nuget.exe: {e}")
+
+    if nuget_exe.exists():
+        run_process([str(nuget_exe), "restore", str(solution_path)])
+    else:
+        Logger.warn("NuGet restore failed: MSBuild/nuget not found or failed.")
 
 def terminate_all():
     """Kill all active subprocesses registered in the system."""
