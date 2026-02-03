@@ -422,3 +422,6 @@ FodyWeavers.xsd
 # Build Tools
 nuget.exe
 
+
+# Generated Cython source
+builds/build_utils.c
