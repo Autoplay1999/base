@@ -17,7 +17,7 @@ HEADER_ONLY_LIBS = [
     ("JSON", "json/include", "*.hpp"),
     ("PHNT", "phnt", "*.h"),
     ("LazyImporter", "lazy_importer/include", "*.hpp"),
-    ("Nirvana", "nirvana", "*.h"),
+
     ("Neargye/magic_enum", "magic_enum/include", "*.hpp"),
     ("Neargye/nameof", "nameof/include", "*.hpp"),
     ("Neargye/scope_guard", "scope_guard/include", "*.hpp"),
