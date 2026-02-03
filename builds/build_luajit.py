@@ -43,7 +43,7 @@ def main() -> None:
         token_dir: Path = LUAJIT_BIN / ".tokens"
         token_file: Path = token_dir / ".valid"
         
-        if not utils.check_build_needed(sources, token_file):
+        if not utils.check_build_needed(sources, token_file, clean_on_rebuild_path=LUAJIT_BIN):
             utils.Logger.success(f"{PRJ_NAME} is already up to date.")
             return
 

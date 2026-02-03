@@ -45,7 +45,7 @@ def build_imgui_variant(variant: str):
         token_dir = dst_bin / ".tokens"
         token_file = token_dir / ".valid"
         
-        if not utils.check_build_needed(sources, token_file):
+        if not utils.check_build_needed(sources, token_file, clean_on_rebuild_path=dst_bin):
             utils.Logger.success(f"[ImGui-{variant}] Already up to date.")
             if injected_cmake:
                 try:

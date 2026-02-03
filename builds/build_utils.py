@@ -462,7 +462,7 @@ def calculate_hash(sources: List[Union[str, Path]]) -> str:
         hasher.update(str(p).encode())
     return hasher.hexdigest()
 
-def check_build_needed(sources: List[Union[str, Path]], token_file: Path) -> bool:
+def check_build_needed(sources: List[Union[str, Path]], token_file: Path, clean_on_rebuild_path: Optional[Path] = None) -> bool:
     if not token_file.exists():
         Logger.detail("Rebuild needed: Validation token missing (.valid)")
         return True
@@ -472,6 +472,14 @@ def check_build_needed(sources: List[Union[str, Path]], token_file: Path) -> boo
         saved_hash = token_file.read_text().strip()
         if current_hash != saved_hash:
             Logger.detail(f"Rebuild needed: Content changes detected (Hash mismatch)")
+            
+            # Auto-Clean Logic (Ref: USR-REQ-AUTO-CLEAN)
+            # If a previous build exists (indicated by token_file) but hash changed, 
+            # we wipe the output directory to ensure no stale artifacts remain.
+            if clean_on_rebuild_path and clean_on_rebuild_path.exists():
+                Logger.info(f"Auto-cleaning output directory due to hash mismatch: {clean_on_rebuild_path}")
+                clean_dir(clean_on_rebuild_path)
+                
             return True
     except:
         return True

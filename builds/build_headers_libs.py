@@ -88,7 +88,8 @@ def build_header_lib(name: str, src_rel: str, pattern: str):
         token_dir = lib_root / ".tokens"
         
         # 2. Check rebuild
-        if not utils.check_build_needed([src_path], token_dir / ".valid"):
+        # 2. Check rebuild
+        if not utils.check_build_needed([src_path], token_dir / ".valid", clean_on_rebuild_path=lib_root):
             utils.Logger.success(f"[{name}] Already up to date.")
             return
 

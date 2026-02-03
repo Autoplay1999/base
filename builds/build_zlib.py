@@ -31,7 +31,7 @@ def main() -> None:
         token_dir: Path = ZLIB_BIN / ".tokens"
         token_file: Path = token_dir / ".valid"
         
-        if not utils.check_build_needed(sources, token_file):
+        if not utils.check_build_needed(sources, token_file, clean_on_rebuild_path=ZLIB_BIN):
             utils.Logger.success(f"{PRJ_NAME} is already up to date.")
             return
 
@@ -128,7 +128,8 @@ def main() -> None:
 
         # --- 3. Export Headers ---
         utils.Logger.detail("Exporting headers...")
-        inc_dst: Path = ZLIB_BIN / "include"
+        # Ref: USR-REQ-ZLIB-NESTED (Nest headers in include/zlib)
+        inc_dst: Path = ZLIB_BIN / "include" / "zlib"
         utils.clean_dir(inc_dst)
         
         # We need zlib.h from source and generated zconf.h from one of the build folders (they are identical across configs)
@@ -144,7 +145,7 @@ def main() -> None:
                     break
         
         shutil.copy2(ZLIB_MODULE / "zlib.h", inc_dst)
-        utils.Logger.success("Headers exported successfully.")
+        utils.Logger.success("Headers exported successfully to include/zlib.")
 
         # --- 4. Finalize ---
         utils.write_build_token(token_dir, sources)

@@ -41,7 +41,7 @@ def build_cmake_lib(name: str, mod_dir: str, header_dir: str, pattern: str, cust
         
         sources = [module_path, Path(__file__), BUILDS_DIR / "build_utils.py"]
         token_dir = BIN_DIR / name.lower() / ".tokens"
-        if not utils.check_build_needed([module_path, Path(__file__)], token_dir / ".valid"):
+        if not utils.check_build_needed([module_path, Path(__file__)], token_dir / ".valid", clean_on_rebuild_path=BIN_DIR / name.lower()):
             utils.Logger.success(f"[{name}] Already up to date.")
             return
 

@@ -21,7 +21,7 @@ def build_xorstr():
         token_dir = BIN_DIR / ".tokens"
         token_file = token_dir / ".valid"
         
-        if not utils.check_build_needed(sources, token_file):
+        if not utils.check_build_needed(sources, token_file, clean_on_rebuild_path=BIN_DIR):
             utils.Logger.success("[XorStr] Already up to date.")
             return
 

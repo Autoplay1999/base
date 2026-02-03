@@ -31,7 +31,7 @@ def main() -> None:
         token_dir: Path = TINYCC_BIN / ".tokens"
         token_file: Path = token_dir / ".valid"
         
-        if not utils.check_build_needed(sources, token_file):
+        if not utils.check_build_needed(sources, token_file, clean_on_rebuild_path=TINYCC_BIN):
             utils.Logger.success(f"{PRJ_NAME} is already up to date.")
             return
 
@@ -82,14 +82,17 @@ def main() -> None:
 
         # --- 3. Export Headers ---
         utils.Logger.detail("Exporting headers...")
-        inc_dst: Path = TINYCC_BIN / "include"
-        utils.ensure_dir(inc_dst)
+        # Ref: USR-REQ-TINYCC-NESTED (Nest headers in include/tinycc)
+        inc_dst: Path = TINYCC_BIN / "include" / "tinycc"
+        utils.clean_dir(inc_dst)
+        
         # Copy main header
         if (TINYCC_MODULE / "libtcc.h").exists():
             shutil.copy2(TINYCC_MODULE / "libtcc.h", inc_dst)
         # Copy all headers from include directory
-        utils.copy_files(TINYCC_MODULE / "include", inc_dst, "*.h")
-        utils.Logger.success("Headers exported successfully.")
+        if (TINYCC_MODULE / "include").exists():
+            utils.copy_files(TINYCC_MODULE / "include", inc_dst, "*.h")
+        utils.Logger.success("Headers exported successfully to include/tinycc.")
 
         # --- 4. Finalize ---
         utils.write_build_token(token_dir, sources)
