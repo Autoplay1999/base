@@ -41,8 +41,12 @@ def build_wrapper(module_info):
     timer = utils.Timer(name)
     try:
         with timer:
+            # Propagate child mode to bypass internal logging threads in subprocesses
+            child_env = dict(os.environ)
+            child_env["BUILD_CHILD_MODE"] = "1"
+            
             # Run Python script using unified run_process to ensure thread-safe output piping
-            result = utils.run_process([sys.executable, script], cwd=BUILD_DIR, pipe_output=True, prefix=prefix)
+            result = utils.run_process([sys.executable, script], cwd=BUILD_DIR, env=child_env, pipe_output=True, prefix=prefix)
         
         if result.returncode == 0:
             utils.Logger.success(f"[{name}] Completed.")
@@ -100,9 +104,6 @@ def run_build():
     
     utils.Logger.detail(f"Build Configuration: Mode={mode_name} | Workers={workers} | Threads/Job={threads_per_job} (System Cores: {total_cores})")
     utils.Logger.info(f"  UNIFIED BUILD SYSTEM (Mode: {mode_name})")
-
-    # Child processes should bypass their internal logger threads to prevent contention (Ref: CC-LOG-CHILD-BYPASS)
-    os.environ["BUILD_CHILD_MODE"] = "1"
 
     # Propagate verbose setting via environment variable (Ref: CC-ENV-PROPAGATION)
     if args.verbose:

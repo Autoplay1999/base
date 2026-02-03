@@ -53,73 +53,42 @@ def main() -> None:
             utils.Logger.detail(f"Setting up environment for {arch_name}...")
             vs_env = env_manager.get_env_vars(arch_name)
             
-            # Find CMake (Ref: CC-PATH-FALLBACK)
-            cmake_exe = shutil.which("cmake", path=vs_env.get("PATH"))
-            if not cmake_exe:
-                potential_cmake = env_manager.vs_path / "Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe"
-                if potential_cmake.exists():
-                    cmake_exe = str(potential_cmake)
-                else:
-                    raise utils.BuildError(f"cmake.exe not found for {arch_name}")
+            # --- Native Build Logic ---
+            build_bat = TINYCC_MODULE / "win32" / "build-tcc.bat"
+            if not build_bat.exists():
+                raise utils.BuildError(f"Native build script not found: {build_bat}")
 
+            utils.Logger.detail(f"Building {arch_name} using native batch script...")
+            
+            # build-tcc.bat options: 
+            # -c cl: use MSVC
+            # -t 32/64: target arch
+            build_cmd = [str(build_bat), "-c", "cl", "-t", "32" if arch_name == "x86" else "64"]
+            utils.run_process(build_cmd, cwd=TINYCC_MODULE / "win32", env=vs_env)
+
+            # --- 3. Deploy Artifacts ---
             for config in CONFIGS:
-                utils.Logger.detail(f"Processing Architecture: {arch_name} | Configuration: {config}")
-                
-                # Setup localized build directory
-                build_temp: Path = TINYCC_MODULE / "build" / arch_name / config.lower()
-                utils.clean_dir(build_temp)
-                
-                # Determine Runtime Library
-                runtime: str = "MultiThreaded" if config == "Release" else "MultiThreadedDebug"
-                
-                # 1. Configure
-                configure_cmd: List[str] = [
-                    cmake_exe, str(TINYCC_MODULE),
-                    "-B", str(build_temp),
-                    "-G", cmake_gen,
-                    "-A", cmake_arch,
-                    f"-DCMAKE_MSVC_RUNTIME_LIBRARY={runtime}",
-                    "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
-                    "-DCMAKE_C_FLAGS=/GR- /MP"
-                ]
-                
-                utils.Logger.detail(f"Configuring {arch_name} ({config})...")
-                utils.run_process(configure_cmd, cwd=TINYCC_MODULE, env=vs_env)
-                
-                # 2. Build
-                cpu_count = utils.get_cpu_limit()
-                build_cmd: List[str] = [
-                    cmake_exe, "--build", str(build_temp),
-                    "--config", config,
-                    "--target", "tinycc",
-                    "--parallel", str(cpu_count)
-                ]
-                
-                utils.Logger.detail(f"Building {arch_name} ({config})...")
-                utils.run_process(build_cmd, cwd=TINYCC_MODULE, env=vs_env)
-                
-                # 3. Deploy Artifacts
                 artifact_dst: Path = TINYCC_BIN / "lib" / arch_name / config
                 utils.ensure_dir(artifact_dst)
                 
-                # Search specifically in the config subfolder
-                lib_found = False
-                for root, _, files in os.walk(build_temp):
-                    if config in Path(root).parts:
-                        if "tinycc.lib" in files:
-                            shutil.copy2(Path(root) / "tinycc.lib", artifact_dst / "tinycc.lib")
-                            lib_found = True
+                # TinyCC native build with -c cl puts libtcc.lib in win32/
+                src_lib = TINYCC_MODULE / "win32" / "libtcc.lib"
                 
-                if not lib_found:
-                    utils.Logger.warn(f"Library tinycc.lib not found for {arch_name}/{config}")
-                else:
+                if src_lib.exists():
+                    shutil.copy2(src_lib, artifact_dst / "tinycc.lib")
                     utils.Logger.success(f"Deployed: {arch_name}/{config} tinycc.lib")
+                else:
+                    utils.Logger.warn(f"Library libtcc.lib not found for {arch_name}")
 
         # --- 3. Export Headers ---
         utils.Logger.detail("Exporting headers...")
         inc_dst: Path = TINYCC_BIN / "include"
         utils.ensure_dir(inc_dst)
-        shutil.copy2(TINYCC_MODULE / "libtcc.h", inc_dst)
+        # Copy main header
+        if (TINYCC_MODULE / "libtcc.h").exists():
+            shutil.copy2(TINYCC_MODULE / "libtcc.h", inc_dst)
+        # Copy all headers from include directory
+        utils.copy_files(TINYCC_MODULE / "include", inc_dst, "*.h")
         utils.Logger.success("Headers exported successfully.")
 
         # --- 4. Finalize ---

@@ -23,18 +23,19 @@ def build_imgui_variant(variant: str):
         dst_inc = dst_bin / "include"
         dst_lib = dst_bin / "lib"
         
-        utils.update_submodule(mod_src)
+        utils.reset_submodule(mod_src, f"modules/imgui/{variant}/imgui")
         
-        # Custom Injection for 'master' and 'docking' variants
+        # Custom Injection for 'master', 'docking' and 'win98' if missing (Ref: USR-REQ-INJECT-CMAKE)
         injected_cmake = False
-        if variant in ["master", "docking"]:
-            resource_cmake = BUILDS_DIR / "resources" / "imgui_master_CMakeLists.txt"
-            if resource_cmake.exists():
-                utils.Logger.detail(f"[ImGui-{variant}] Injecting CMakeLists.txt from resources...")
-                shutil.copy2(resource_cmake, mod_src / "CMakeLists.txt")
-                injected_cmake = True
+        resource_cmake = BUILDS_DIR / "resources" / "imgui_master_CMakeLists.txt"
+        
+        # We always check for resource_cmake and inject if target doesn't have it or if it's one of the primary variants
+        if resource_cmake.exists() and (variant in ["master", "docking", "win98"]):
+            utils.Logger.detail(f"[ImGui-{variant}] Injecting CMakeLists.txt from resources...")
+            shutil.copy2(resource_cmake, mod_src / "CMakeLists.txt")
+            injected_cmake = True
 
-        # Check if custom CMakeLists.txt is there
+        # Check if CMakeLists.txt is there
         cmake_file = mod_src / "CMakeLists.txt"
         if not cmake_file.exists():
              utils.Logger.error(f"[ImGui-{variant}] CMakeLists.txt missing at {cmake_file}")

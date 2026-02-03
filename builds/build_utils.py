@@ -58,14 +58,35 @@ class Logger:
     _queue = queue.SimpleQueue()
     _thread = None
     _lock = threading.Lock() # Global lock for thread-safe initialization (Ref: CC-LOG-SYNC)
+    _print_lock = threading.Lock() # Global lock for atomic console output (Ref: CC-LOG-PRINT-ATOMIC)
 
     @staticmethod
     def _worker():
         while True:
             msg = Logger._queue.get()
             if msg is None: break # Sentinel to stop
-            print(msg)
-            sys.stdout.flush() # Ensure immediate visibility (Ref: CC-LOG-SYNC)
+            with Logger._print_lock:
+                # Use sys.stdout.write for atomic line output (Ref: CC-LOG-ATOMIC-SYSCALL)
+                # Concatenating \n ensures the entire line is sent in one write operation
+                sys.stdout.write(str(msg) + '\n')
+                sys.stdout.flush() 
+
+
+    @staticmethod
+    def _sanitize(text: str) -> str:
+        """
+        Strips ANSI escape codes and ALL control characters except Tab/Newline.
+        This prevents cursor-moving characters (like \b, \r) from distorting the console (Ref: CC-LOG-PURITY-GOD).
+        """
+        # 1. Strip ANSI escape sequences
+        import re
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        text = ansi_escape.sub('', text)
+        
+        # 2. Strip ALL control characters (ASCII 0-31, 127) except tab (\t = 9)
+        # We handle \n and \r at the line-split level, so here we remove them to be safe.
+        return "".join(c for c in text if ord(c) >= 32 or c == '\t')
+
 
     @staticmethod
     def start():
@@ -93,11 +114,14 @@ class Logger:
 
     @staticmethod
     def _print(msg: str):
-        # Direct-to-pipe printing if we are a child process (Unified Efficiency)
+        # Use global print lock and atomic write for output (Ref: CC-LOG-PRINT-ATOMIC)
         if os.environ.get("BUILD_CHILD_MODE") == "1":
-            print(msg)
-            sys.stdout.flush()
+            with Logger._print_lock:
+                # Atomic write: single operation to prevent character-level interleaving
+                sys.stdout.write(str(msg) + '\n')
+                sys.stdout.flush()
             return
+
 
         # Ensure thread is running (lazy start)
         if Logger._thread is None:
@@ -168,14 +192,23 @@ def run_process(cmd: List[str], cwd: Path = None, env: Dict[str, str] = None, ch
     verbose = Logger._verbose
     
     # Always merge stderr into stdout for consistent linear output
+    # Creation flags for Windows to support process groups (Ref: CC-PROC-TERMINATION-GROUP)
+    creationflags = 0
+    if os.name == 'nt':
+        creationflags = subprocess.CREATE_NEW_PROCESS_GROUP
+
+    # Isolate stdin to prevent tools from detecting interactive console (Ref: CC-LOG-ISOLATION-STDIN)
+    # This stops Git/CMake from writing to CONOUT$ directly
     process = subprocess.Popen(
         cmd, 
         cwd=cwd, 
         env=env, 
         stdout=subprocess.PIPE, 
         stderr=subprocess.STDOUT,
+        stdin=subprocess.DEVNULL, # Explicitly detach stdin
         text=False, # Binary mode for universal compatibility
-        bufsize=0 # Unbuffered for real-time feedback
+        bufsize=0, # Unbuffered for real-time feedback
+        creationflags=creationflags
     )
     
     # Register process for tracking
@@ -183,53 +216,77 @@ def run_process(cmd: List[str], cwd: Path = None, env: Dict[str, str] = None, ch
         _active_processes.add(process)
     
     # Stream output if verbose or explicitly requested (useful for parent-child piping)
-    # Ref: CC-LOG-SYNC-NATIVE (Binary-safe character-based capture)
+    # Ref: CC-LOG-SYNC-GOD-TIER (Block-based binary capture with manual EOL handling)
     output_lines = []
-    current_line_bytes = bytearray()
     
     # Determine system encoding for decoding build logs
     import locale
     encoding = locale.getpreferredencoding()
     
     def process_line(b_line: bytearray):
-        # Decode and prefix
-        stripped = b_line.decode(encoding, errors='replace').rstrip('\r\n')
+        # Decode and handle carriage returns (\r)
+        # Ref: CC-LOG-COLLAPSE (Collapse \r segments to the last one to prevent fragmentation)
+        raw_text = b_line.decode(encoding, errors='replace')
+        
+        # If there are carriage returns, it's likely a progress bar. 
+        # We take the last segment to avoid logging 100 partial lines.
+        if '\r' in raw_text:
+            segments = [s.strip() for s in raw_text.split('\r') if s.strip()]
+            stripped = segments[-1] if segments else ""
+        else:
+            stripped = raw_text.strip()
         
         # Skip empty lines when prefix is present to prevent log noise (Ref: CC-LOG-QUIET-EMPTY)
-        # This keeps the parallel output dense and clean.
         if prefix and not stripped:
             return
+
+        # Sanitize child output: remove ANSI and ALL hidden control characters (Ref: CC-LOG-PURITY-GOD)
+        if prefix:
+            stripped = Logger._sanitize(stripped)
 
         output_lines.append(stripped)
         if verbose or pipe_output:
             msg = f"{prefix} {stripped}" if prefix else stripped
             Logger._print(msg)
-            
-    # Read byte-by-byte to respond to \r immediately without buffering
-    # Ref: CC-LOG-SYNC-CRLF-SAFE
-    last_was_cr = False
-    while True:
-        b = process.stdout.read(1)
-        if not b:
-            if current_line_bytes:
-                process_line(current_line_bytes)
-            break
-            
-        if b == b'\n':
-            # Skip empty process_line if we just handled the \r part of \r\n
-            if not last_was_cr or current_line_bytes:
-                process_line(current_line_bytes)
-            current_line_bytes = bytearray()
-            last_was_cr = False
-        elif b == b'\r':
-            process_line(current_line_bytes)
-            current_line_bytes = bytearray()
-            last_was_cr = True
-        else:
-            current_line_bytes.extend(b)
-            last_was_cr = False
     
-    rc = process.wait() # Ensure process is fully closed
+    # Track partial lines across reads
+    remnant = bytearray()
+    
+    def process_chunk(chunk: bytes):
+        nonlocal remnant
+        buffer = remnant + chunk
+        
+        # Search ONLY for line feed: \n (byte 10)
+        # We handle \r (carriage return) inside process_line to collapse progress bars (Ref: CC-LOG-SYNC-GOD-V3)
+        start = 0
+        for i in range(len(buffer)):
+            char = buffer[i]
+            if char == 10: # \n (Line Feed)
+                line_segment = buffer[start:i]
+                # Even if empty, we might want it (unless prefixed)
+                process_line(bytearray(line_segment))
+                start = i + 1
+        
+        remnant = buffer[start:]
+
+    try:
+        # Use block-based reading for maximum robustness and performance (Ref: CC-LOG-SYNC-GOD-TIER)
+        while True:
+            # Read a chunk. 4096 is a good standard buffer size.
+            chunk = process.stdout.read(4096)
+            if not chunk:
+                break
+            process_chunk(chunk)
+        
+        # Process any remaining data at EOF
+        if remnant:
+            process_line(remnant)
+        
+        rc = process.wait() # Ensure process is fully closed
+    except KeyboardInterrupt:
+        terminate_all()
+        # Re-raise for the top-level main() to handle if needed
+        raise
     
     # Unregister process on completion
     with _processes_lock:
@@ -445,8 +502,31 @@ def copy_files(src: Path, dst: Path, pattern: str, recursive: bool = False):
 def update_submodule(path: Path):
     """Updates git submodule to its expected state."""
     Logger.detail(f"Updating submodule: {path}")
-    subprocess.run(["git", "submodule", "update", "--init", "--recursive", str(path)], 
-                   cwd=ROOT_DIR, capture_output=True)
+    # Use run_process to ensure output is captured and serialized (Ref: CC-LOG-SYNC-SUBMODULE)
+    run_process(["git", "submodule", "update", "--init", "--recursive", str(path)], 
+                cwd=ROOT_DIR)
+
+def reset_submodule(path: Path, module_name: str):
+    """
+    Force resets a submodule by deleting its directory and re-initializing.
+    (Ref: USR-REQ-RESET-SUBMODULE)
+    """
+    Logger.info(f"Resetting submodule '{module_name}' at {path}...")
+    
+    # Aggressively delete the module source folder if it exists
+    if path.exists():
+        Logger.detail(f"Deleting existing submodule directory: {path}")
+        try:
+            shutil.rmtree(path)
+        except Exception as e:
+            Logger.warn(f"Failed to delete submodule directory via rmtree: {e}. Trying via cmd...")
+            # Still use captured run_process for cmd
+            run_process(["cmd", "/c", "rd", "/s", "/q", str(path)])
+
+    # Re-initialize submodule using run_process to prevent log interleaving
+    Logger.detail(f"Re-initializing submodule '{module_name}'...")
+    run_process(["git", "submodule", "update", "--init", "--recursive", module_name], 
+                cwd=ROOT_DIR)
 
 
 def apply_patch(repo_path: Path, patch_file: Path) -> bool:
@@ -456,24 +536,22 @@ def apply_patch(repo_path: Path, patch_file: Path) -> bool:
         return False
     
     # Use git apply --check to see if the patch can be applied cleanly
-    check_cmd = ["git", "apply", "--check", "--ignore-whitespace", str(patch_file)]
-    result = subprocess.run(check_cmd, cwd=repo_path, capture_output=True)
-    
-    if result.returncode == 0:
+    # Capture output via run_process to prevent interleaving
+    try:
+        run_process(["git", "apply", "--check", "--ignore-whitespace", str(patch_file)], cwd=repo_path)
+        
         Logger.info(f"Applying patch: {patch_file.name}")
-        apply_cmd = ["git", "apply", "--ignore-whitespace", str(patch_file)]
-        subprocess.run(apply_cmd, cwd=repo_path, check=True)
+        run_process(["git", "apply", "--ignore-whitespace", str(patch_file)], cwd=repo_path)
         Logger.success(f"Successfully applied {patch_file.name}")
         return True
-    else:
-        # Check if already applied
-        reverse_check = ["git", "apply", "--reverse", "--check", "--ignore-whitespace", str(patch_file)]
-        rev_result = subprocess.run(reverse_check, cwd=repo_path, capture_output=True)
-        if rev_result.returncode == 0:
+    except Exception as e:
+        # Check if already applied via reverse check (also captured)
+        try:
+            run_process(["git", "apply", "--reverse", "--check", "--ignore-whitespace", str(patch_file)], cwd=repo_path)
             Logger.info(f"Patch {patch_file.name} already applied.")
             return True
-        else:
-            Logger.warn(f"Patch {patch_file.name} failed check. Stderr:\n{result.stderr.decode()}")
+        except:
+            Logger.warn(f"Patch {patch_file.name} failed check or apply: {e}")
             return False
 
 def run_nuget_restore(solution_path: Path):
@@ -485,7 +563,7 @@ def run_nuget_restore(solution_path: Path):
         return
     
     Logger.info(f"Restoring NuGet packages for {solution_path.name}...")
-    subprocess.run([str(nuget_exe), "restore", str(solution_path)], capture_output=True)
+    run_process([str(nuget_exe), "restore", str(solution_path)])
 
 def terminate_all():
     """Kill all active subprocesses registered in the system."""
@@ -493,12 +571,14 @@ def terminate_all():
         if not _active_processes:
             return
             
-        Logger.info(f"Terminating {_active_processes.__len__()} active processes...")
+        Logger.info(f"Terminating {_active_processes.__len__()} active processes and their descendants...")
         for p in _active_processes:
             try:
-                # Kill process and its children on Windows
+                # Kill process and its children on Windows (Ref: CC-PROC-TERMINATION-FORCE)
                 if os.name == 'nt':
-                    subprocess.run(['taskkill', '/F', '/T', '/PID', str(p.pid)], capture_output=True)
+                    # /F = Force, /T = Tree (including children), /PID = Process ID
+                    subprocess.run(['taskkill', '/F', '/T', '/PID', str(p.pid)], 
+                                 capture_output=True, timeout=5)
                 else:
                     p.terminate()
             except Exception:
