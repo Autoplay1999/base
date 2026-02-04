@@ -53,32 +53,57 @@ def main() -> None:
             utils.Logger.detail(f"Setting up environment for {arch_name}...")
             vs_env = env_manager.get_env_vars(arch_name)
             
-            # --- Native Build Logic ---
+            # --- Native Build Logic (Refactor for Multi-Config) ---
             build_bat = TINYCC_MODULE / "win32" / "build-tcc.bat"
             if not build_bat.exists():
                 raise utils.BuildError(f"Native build script not found: {build_bat}")
 
-            utils.Logger.detail(f"Building {arch_name} using native batch script...")
-            
-            # build-tcc.bat options: 
-            # -c cl: use MSVC
-            # -t 32/64: target arch
-            build_cmd = [str(build_bat), "-c", "cl", "-t", "32" if arch_name == "x86" else "64"]
-            utils.run_process(build_cmd, cwd=TINYCC_MODULE / "win32", env=vs_env)
-
-            # --- 3. Deploy Artifacts ---
             for config in CONFIGS:
-                artifact_dst: Path = TINYCC_BIN / "lib" / arch_name / config
+                utils.Logger.detail(f"Building {arch_name} | {config}...")
+                
+                # Cleanup before build to ensure no artifact mixing
+                utils.clean_dir(TINYCC_MODULE / "win32" / "obj") # specific to tcc win32 script if needed, or just rely on overwrite
+                # Actually build-tcc.bat is simple, might need more manual cleanup if it doesn't clean.
+                # Assuming overwrite works for .lib/.exe
+                
+                build_cmd = [str(build_bat), "-c", "cl", "-t", "32" if arch_name == "x86" else "64"]
+                
+                run_env = vs_env.copy()
+                base_cl = "/MT" if config == "Release" else "/MTd"
+                
+                if config == "Debug":
+                     # Ref: USR-REQ-EMBED-PDB
+                     run_env["CL"] = (run_env.get("CL", "") + f" {base_cl} /Z7").strip()
+                else:
+                     # Release: Optimize, No Debug Info
+                     run_env["CL"] = (run_env.get("CL", "") + f" {base_cl} /O2 /DNDEBUG").strip()
+
+                utils.run_process(build_cmd, cwd=TINYCC_MODULE / "win32", env=run_env)
+
+                # 3. Deploy Artifacts
+                artifact_dst: Path = TINYCC_BIN / "lib" / arch_name / config.lower()
                 utils.ensure_dir(artifact_dst)
                 
-                # TinyCC native build with -c cl puts libtcc.lib in win32/
-                src_lib = TINYCC_MODULE / "win32" / "libtcc.lib"
+                # Active Clean PDBs (Ref: USR-REQ-EMBED-PDB)
+                if artifact_dst.exists():
+                    for stale in artifact_dst.glob("*.pdb"):
+                        try: stale.unlink()
+                        except: pass
                 
-                if src_lib.exists():
-                    shutil.copy2(src_lib, artifact_dst / "tinycc.lib")
-                    utils.Logger.success(f"Deployed: {arch_name}/{config} tinycc.lib")
-                else:
-                    utils.Logger.warn(f"Library libtcc.lib not found for {arch_name}")
+                # Deploy built libraries
+                lib_found = False
+                # The build-tcc.bat script places libtcc.lib directly in win32/
+                search_dir = TINYCC_MODULE / "win32" 
+                if search_dir.exists():
+                    for f in search_dir.glob("*.lib"): # Only look for .lib files
+                        if f.name == "libtcc.lib": # Specifically target libtcc.lib
+                            shutil.copy2(f, artifact_dst / "tinycc.lib")
+                            utils.Logger.success(f"Deployed: {arch_name}/{config} tinycc.lib")
+                            lib_found = True
+                            break # Found the lib, no need to continue loop
+                
+                if not lib_found:
+                    utils.Logger.warn(f"Library libtcc.lib not found for {arch_name}/{config}")
 
         # --- 3. Export Headers ---
         utils.Logger.detail("Exporting headers...")

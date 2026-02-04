@@ -78,6 +78,15 @@ def build_cmake_lib(name: str, mod_dir: str, header_dir: str, pattern: str, cust
                     "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
                     "-DCMAKE_CXX_FLAGS=/GR- /MP",
                     "-DCMAKE_C_FLAGS=/MP",
+                    
+                    # Force embedded debug info (/Z7) (Ref: USR-REQ-EMBED-PDB)
+                    "-DCMAKE_CXX_FLAGS_DEBUG=/MTd /Z7 /Ob0 /Od /RTC1",
+                    "-DCMAKE_C_FLAGS_DEBUG=/MTd /Z7 /Ob0 /Od /RTC1",
+                    
+                    # Force Clean Release (Ref: USR-REQ-NO-DEBUG-INFO)
+                    "-DCMAKE_CXX_FLAGS_RELEASE=/MT /O2 /Ob2 /DNDEBUG",
+                    "-DCMAKE_C_FLAGS_RELEASE=/MT /O2 /Ob2 /DNDEBUG",
+
                     "-DCMAKE_DEBUG_POSTFIX=",
 
                     f"-DCMAKE_INSTALL_PREFIX={temp_install}",
@@ -115,34 +124,30 @@ def build_cmake_lib(name: str, mod_dir: str, header_dir: str, pattern: str, cust
                 lib_dst = lib_base_dir / "lib" / arch_name / config.lower()
                 utils.ensure_dir(lib_dst)
                 
-                # Copy Libs and collect names for PDB matching (Ref: CC-DEPLOY-LIB)
+                # Active Clean PDBs (Ref: USR-REQ-EMBED-PDB)
+                if lib_dst.exists():
+                    for stale_pdb in lib_dst.glob("*.pdb"):
+                        try: stale_pdb.unlink()
+                        except: pass
+
+                # Copy Libs only (Embedded PDB)
                 installed_stems = set()
                 for f in temp_install.rglob("*.lib"):
                     target_name = f.name
                     
-                    # Deduplicate SimdJSON: Keep simdjson.lib, skip simdjson_static.lib
+                    # Deduplicate SimdJSON
                     if name == "SimdJSON" and f.stem.lower() == "simdjson_static":
                         utils.Logger.info(f"[{name}] Skipping redundant lib: {f.name}")
                         continue
                         
-                    # Rename Turbo-Base64 lib to turbo-base64.lib
+                    # Rename Turbo-Base64
                     if name == "Turbo-Base64":
                         target_name = "turbo-base64.lib"
-                        utils.Logger.info(f"[{name}] Renaming lib to: {target_name}")
 
                     shutil.copy2(f, lib_dst / target_name)
                     installed_stems.add(Path(target_name).stem.lower())
                 
-                # Copy only relevant PDBs
-                for f in build_temp.rglob("*.pdb"):
-                    # For Turbo-Base64, PDB name should also match renamed lib name
-                    if name == "Turbo-Base64":
-                        if f.stem.lower() == "turbo-base64":
-                            shutil.copy2(f, lib_dst)
-                        elif f.stem.lower() == "turbo_base64": # Original name likely
-                            shutil.copy2(f, lib_dst / "turbo-base64.pdb")
-                    elif f.stem.lower() in installed_stems:
-                        shutil.copy2(f, lib_dst)
+                # NO PDB COPYING - /Z7 used for Debug, /O2 for Release
 
         # Export Headers (Unified)
         utils.Logger.detail(f"[{name}] Exporting headers...")

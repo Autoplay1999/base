@@ -83,7 +83,13 @@ def main() -> None:
                     "-DZLIB_BUILD_TESTING=OFF",
                     f"-DCMAKE_MSVC_RUNTIME_LIBRARY={runtime}",
                     "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
-                    "-DCMAKE_C_FLAGS=/GR- /MP"
+                    "-DCMAKE_C_FLAGS=/GR- /MP",
+
+                    # Ref: USR-REQ-EMBED-PDB
+                    "-DCMAKE_C_FLAGS_DEBUG=/MTd /Z7 /Ob0 /Od /RTC1",
+                    
+                    # Force Clean Release (Ref: USR-REQ-NO-DEBUG-INFO)
+                    "-DCMAKE_C_FLAGS_RELEASE=/MT /O2 /Ob2 /DNDEBUG"
                 ]
                 
                 utils.Logger.detail(f"Configuring {arch_name} ({config})...")
@@ -112,19 +118,24 @@ def main() -> None:
                 lib_found = False
                 for root, _, files in os.walk(build_temp):
                     if config in Path(root).parts:
+                        # Clean legacy PDBs
+                        utils.Logger.detail(f"Ensuring no stale PDBs in {artifact_dst}...")
+                        for old_pdb in artifact_dst.glob("*.pdb"):
+                            try: old_pdb.unlink()
+                            except: pass
+
                         if src_lib_name in files:
                             # Rename to zlib.lib for downstream compatibility
                             shutil.copy2(Path(root) / src_lib_name, artifact_dst / "zlib.lib")
-                            # Also attempt to copy PDB
-                            pdb_name = src_lib_name.replace(".lib", ".pdb")
-                            if pdb_name in files:
-                                shutil.copy2(Path(root) / pdb_name, artifact_dst / "zlib.pdb")
+                            utils.Logger.success(f"Deployed: {arch_name}/{config} zlib.lib")
                             lib_found = True
+                        
+                        # No PDB Copy (Embedded /Z7 used)
                 
                 if not lib_found:
                     utils.Logger.warn(f"Library {src_lib_name} not found for {arch_name}/{config}")
                 else:
-                    utils.Logger.success(f"Deployed: {arch_name}/{config} zlib.lib")
+                    pass # The success message is now inside the loop
 
         # --- 3. Export Headers ---
         utils.Logger.detail("Exporting headers...")

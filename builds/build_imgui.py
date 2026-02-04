@@ -102,7 +102,15 @@ def build_imgui_variant(variant: str):
                     f"-DCMAKE_MSVC_RUNTIME_LIBRARY={runtime}",
                     "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
                     "-DCMAKE_CXX_FLAGS=/GR- /EHsc /MP",
-                    "-DCMAKE_C_FLAGS=/MP"
+                    "-DCMAKE_C_FLAGS=/MP",
+
+                    # Ref: USR-REQ-EMBED-PDB
+                    "-DCMAKE_CXX_FLAGS_DEBUG=/MTd /Z7 /Ob0 /Od /RTC1 /EHsc",
+                    "-DCMAKE_C_FLAGS_DEBUG=/MTd /Z7 /Ob0 /Od /RTC1",
+                    
+                    # Force Clean Release (Ref: USR-REQ-NO-DEBUG-INFO)
+                    "-DCMAKE_CXX_FLAGS_RELEASE=/MT /O2 /Ob2 /DNDEBUG",
+                    "-DCMAKE_C_FLAGS_RELEASE=/MT /O2 /Ob2 /DNDEBUG"
                 ]
                 utils.run_process(configure_cmd, cwd=mod_src, env=vs_env)
                 
@@ -121,17 +129,22 @@ def build_imgui_variant(variant: str):
                 
                 # Deploy all libs found (imgui.lib, imgui_dx9.lib, etc.)
                 deployed_libs = 0
+                installed_stems = set() # Initialize set for tracking installed library stems
                 for root, _, files in os.walk(build_temp):
                     if config in Path(root).parts:
                         for f in files:
                             if f.endswith(".lib"):
                                 src_lib = Path(root) / f
+                                installed_stems.add(Path(f).stem.lower())
+
+                                # Clean stale PDB
+                                stale_pdb = lib_dst / f.replace(".lib", ".pdb")
+                                if stale_pdb.exists():
+                                    stale_pdb.unlink()
+
                                 shutil.copy2(src_lib, lib_dst / f)
                                 
-                                # Try copy matching PDB
-                                pdb_name = f.replace(".lib", ".pdb")
-                                if pdb_name in files:
-                                    shutil.copy2(Path(root) / pdb_name, lib_dst / pdb_name)
+                                # No PDB Copy - Embedded Only
                                 
                                 deployed_libs += 1
 

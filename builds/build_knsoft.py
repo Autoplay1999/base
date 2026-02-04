@@ -40,9 +40,20 @@ def build_module(name: str, rel_path: str, project_file: str, header_pkg: str = 
         utils.update_submodule(MODULES_DIR / rel_path.split('/')[0])
 
         # 1.1 Apply Patch (Ref: CC-PATCH-AUTO)
+        # 1.1 Apply Patch (Ref: CC-PATCH-AUTO)
         if name == "FirmwareSpec":
-            patch_file = BUILDS_DIR / "firmwarespec.patch"
-            utils.apply_patch(MODULES_DIR / "KNSoft.FirmwareSpec", patch_file)
+            # Check if patch is needed (Idempotency)
+            # The patch bumps .net 9.0 -> 10.0. If 10.0 is already there, skip.
+            try:
+                # mod_dir is .../VSProject, so TypeInfoGenerator is in parent/TypeInfoGenerator
+                check_path = mod_dir.parent / "TypeInfoGenerator" / "TypeInfoGenerator.csproj"
+                if check_path.exists() and "<TargetFramework>net10.0</TargetFramework>" in check_path.read_text():
+                    utils.Logger.detail(f"[{name}] Patch seems already applied (net10.0 detected). Skipping.")
+                else:
+                    patch_file = BUILDS_DIR / "firmwarespec.patch"
+                    utils.apply_patch(MODULES_DIR / "KNSoft.FirmwareSpec", patch_file)
+            except Exception as e:
+                utils.Logger.warn(f"[{name}] Patch check failed: {e}")
 
         # Special handling for FirmwareSpec: Build TypeInfoGenerator
         if name == "FirmwareSpec":
@@ -80,6 +91,13 @@ def build_module(name: str, rel_path: str, project_file: str, header_pkg: str = 
                         f"/p:Platform={arch_name if arch_name != 'x86' else 'Win32'}",
                         f"/m:{utils.get_cpu_limit()}", "/v:m"
                     ]
+
+                    if config == "Debug":
+                        # Ref: USR-REQ-EMBED-PDB
+                        cmd.append("/p:DebugInformationFormat=OldStyle")
+                    else:
+                        # Ref: USR-REQ-NO-DEBUG-INFO
+                        cmd.extend(["/p:DebugSymbols=false", "/p:DebugType=None"])
                     
                     utils.run_process(cmd, env=env)
                         
@@ -88,16 +106,18 @@ def build_module(name: str, rel_path: str, project_file: str, header_pkg: str = 
                     lib_dst = BIN_DIR / "KNSoft" / "lib" / arch_name / config.lower()
                     utils.ensure_dir(lib_dst)
                     
-                    # Copy .lib and .pdb
+                    # Clean destination PDBs (Ref: USR-REQ-EMBED-PDB)
+                    if lib_dst.exists():
+                        for legacy_pdb in lib_dst.glob("*.pdb"):
+                            try: legacy_pdb.unlink()
+                            except: pass
+
+                    # Copy .lib only (PDB is embedded via /Z7)
                     found = False
                     if out_dir.exists():
-                        for f in out_dir.glob("*"):
-                            if f.suffix.lower() in [".lib", ".pdb"]:
-                                # Ref: USR-REQ-NO-SMBIOS-PDB
-                                if f.name.lower() == "smbiosdecode.pdb":
-                                    continue
-                                shutil.copy2(f, lib_dst / f.name)
-                                found = True
+                        for f in out_dir.glob("*.lib"):
+                             shutil.copy2(f, lib_dst / f.name)
+                             found = True
                     
                     if not found:
                         utils.Logger.warn(f"[{name}] No artifacts found in {out_dir}")

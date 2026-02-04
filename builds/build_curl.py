@@ -102,6 +102,13 @@ def main() -> None:
                     "-G", cmake_gen,
                     "-A", cmake_arch
                 ] + COMMON_ARGS
+
+                # Force embedded debug info (/Z7) for Debug builds to avoid missing PDB issues (Ref: USR-REQ-EMBED-PDB)
+                if config == "Debug":
+                    configure_cmd.extend([
+                        '-DCMAKE_C_FLAGS_DEBUG="/MTd /Z7 /Ob0 /Od /RTC1"',
+                        '-DCMAKE_CXX_FLAGS_DEBUG="/MTd /Z7 /Ob0 /Od /RTC1 /EHsc"'
+                    ])
                 
                 utils.Logger.detail(f"Configuring {arch_name} ({config})...")
                 utils.run_process(configure_cmd, cwd=CURL_MODULE, env=vs_env)
@@ -122,6 +129,12 @@ def main() -> None:
                 artifact_dst: Path = CURL_BIN / "lib" / arch_name / config.lower()
                 utils.ensure_dir(artifact_dst)
                 
+                # Active Clean PDBs (Ref: USR-REQ-EMBED-PDB)
+                if artifact_dst.exists():
+                    for stale in artifact_dst.glob("*.pdb"):
+                        try: stale.unlink()
+                        except: pass
+
                 # Heuristic search for libcurl*.lib in the 'lib' subfolder of build
                 lib_found = False
                 search_dir = build_temp / "lib" / config
@@ -131,9 +144,8 @@ def main() -> None:
                             if name.endswith(".lib") and "libcurl" in name.lower():
                                 shutil.copy2(Path(root) / name, artifact_dst / "libcurl.lib")
                                 lib_found = True
-                                
-                            if name.endswith(".pdb") and "libcurl" in name.lower():
-                                shutil.copy2(Path(root) / name, artifact_dst / "libcurl.pdb")
+                
+                # No PDB Copying - Embedded Info Only
                 
                 if lib_found:
                     utils.Logger.success(f"Deployed: {arch_name}/{config} library")

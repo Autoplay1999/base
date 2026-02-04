@@ -57,7 +57,15 @@ def main() -> None:
             "-DZYDIS_BUILD_SHARED_LIB=OFF",
             "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
             "-DCMAKE_CXX_FLAGS=/GR- /EHsc /MP",
-            "-DCMAKE_C_FLAGS=/GR- /MP"
+            "-DCMAKE_C_FLAGS=/GR- /MP",
+
+            # Ref: USR-REQ-EMBED-PDB
+            "-DCMAKE_CXX_FLAGS_DEBUG=/MTd /Z7 /Ob0 /Od /RTC1 /EHsc",
+            "-DCMAKE_C_FLAGS_DEBUG=/MTd /Z7 /Ob0 /Od /RTC1",
+
+            # Force Clean Release (Ref: USR-REQ-NO-DEBUG-INFO)
+            "-DCMAKE_CXX_FLAGS_RELEASE=/MT /O2 /Ob2 /DNDEBUG",
+            "-DCMAKE_C_FLAGS_RELEASE=/MT /O2 /Ob2 /DNDEBUG"
         ]
         
         for arch_name, cmake_arch in ARCH_MAP.items():
@@ -118,15 +126,22 @@ def main() -> None:
                 for lib in libs_to_copy:
                     # Search specifically in the config subfolder
                     lib_found = False
-                    for root, _, files in os.walk(build_temp):
+                    for root, _, files_from_os_walk in os.walk(build_temp):
+                        # Re-evaluate files using Path.glob for more robust matching
+                        files = [x.name for x in Path(root).glob("*")]
+
+                        # Active Clean PDBs
+                        if artifact_dst.exists():
+                             for stale in artifact_dst.glob("*.pdb"):
+                                 try: stale.unlink()
+                                 except: pass
+
                         if config in Path(root).parts:
                             if lib in files:
                                 shutil.copy2(Path(root) / lib, artifact_dst / lib)
-                                # Also attempt to copy PDB
-                                pdb_name = lib.replace(".lib", ".pdb")
-                                if pdb_name in files:
-                                    shutil.copy2(Path(root) / pdb_name, artifact_dst / pdb_name)
                                 lib_found = True
+                    
+                    # No PDB Copy - Embedded Only
                     
                     if not lib_found:
                         utils.Logger.warn(f"Library {lib} not found for {arch_name}/{config}")

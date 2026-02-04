@@ -75,7 +75,8 @@ def main() -> None:
                 if config == "Release":
                     lj_flags += " /MT /O2"
                 else:
-                    lj_flags += " /MTd /Zi /Od"
+                    # Ref: USR-REQ-EMBED-PDB
+                    lj_flags += " /MTd /Z7 /Od"
                     msvc_args = "debug static"
                 
                 # Setup compile command injection
@@ -103,13 +104,17 @@ def main() -> None:
                 src_pdb = LUAJIT_SRC / pdb_name
                 
                 if src_lib.exists():
-                    shutil.move(src_lib, artifact_dst / lib_name)
-                    utils.Logger.success(f"Deployed: {arch}/{config} library")
+                    shutil.move(src_lib, artifact_dst / "lua51.lib") # Rename for consistency
+                    utils.Logger.success(f"Deployed: {arch}/{config} lua51.lib")
                 else:
-                    utils.Logger.error(f"Could not find {lib_name} after build.")
-                    
+                    utils.Logger.error(f"Missing artifact: {src_lib}")
+
+                # Clean PDBs (Embedded only)
                 if src_pdb.exists():
-                    shutil.move(src_pdb, artifact_dst / pdb_name)
+                     src_pdb.unlink(missing_ok=True) # Ensure it's gone from source/temp
+                
+                if (artifact_dst / pdb_name).exists():
+                     (artifact_dst / pdb_name).unlink(missing_ok=True)
 
         # --- 3. Export Headers ---
         utils.Logger.detail("Exporting headers...")

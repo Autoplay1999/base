@@ -72,7 +72,15 @@ def main() -> None:
                     "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
                     f"-DCMAKE_MSVC_RUNTIME_LIBRARY={'MultiThreadedDebug' if config == 'Debug' else 'MultiThreaded'}", # CC-RT-STATIC
                     "-DCMAKE_CXX_FLAGS=/GR- /EHsc /MP",
-                    "-DCMAKE_C_FLAGS=/GR- /MP"
+                    "-DCMAKE_C_FLAGS=/GR- /MP",
+
+                    # Ref: USR-REQ-EMBED-PDB
+                    "-DCMAKE_CXX_FLAGS_DEBUG=/MTd /Z7 /Ob0 /Od /RTC1 /EHsc",
+                    "-DCMAKE_C_FLAGS_DEBUG=/MTd /Z7 /Ob0 /Od /RTC1",
+
+                    # Force Clean Release (Ref: USR-REQ-NO-DEBUG-INFO)
+                    "-DCMAKE_CXX_FLAGS_RELEASE=/MT /O2 /Ob2 /DNDEBUG",
+                    "-DCMAKE_C_FLAGS_RELEASE=/MT /O2 /Ob2 /DNDEBUG"
                 ]
                 
                 utils.Logger.detail(f"Configuring {arch_name}/{config}...")
@@ -98,14 +106,22 @@ def main() -> None:
                 artifact_src: Path = build_temp / config / "asmjit.lib"
                 pdb_src: Path = build_temp / config / "asmjit.pdb"
                 
+                lib_found = False
                 if artifact_src.exists():
                     shutil.copy2(artifact_src, artifact_dst)
                     utils.Logger.success(f"Deployed: {arch_name}/{config} library")
-                else:
+                    lib_found = True
+                
+                if not lib_found:
                     utils.Logger.error(f"Missing artifact: {artifact_src}")
-                    
-                if pdb_src.exists():
-                    shutil.copy2(pdb_src, artifact_dst)
+                
+                # Active Clean PDBs
+                if artifact_dst.exists():
+                     for stale in artifact_dst.glob("*.pdb"):
+                         try: stale.unlink()
+                         except: pass
+
+                # No PDB Copy - Embedded Only
 
         # --- 3. Export Headers (Ref: CC-SDK-EXPORT) ---
         utils.Logger.detail("Exporting headers...")
