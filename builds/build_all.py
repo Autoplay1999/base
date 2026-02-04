@@ -130,6 +130,7 @@ def run_build():
         ("CMake Libs", "build_cmake_libs.py"),
         ("ImGui", "build_imgui.py"),
         ("KNSoft", "build_knsoft.py"),
+        ("VMP", "build_vmp.py"),
     ]
 
     # Stage 2: Dependent Modules (Must wait for Stage 1)
