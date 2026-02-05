@@ -83,13 +83,13 @@ def main() -> None:
                     "-DZLIB_BUILD_TESTING=OFF",
                     f"-DCMAKE_MSVC_RUNTIME_LIBRARY={runtime}",
                     "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
-                    "-DCMAKE_C_FLAGS=/GR- /MP",
+                    "-DCMAKE_C_FLAGS=/GR- /MP -DZ_PREFIX",
 
                     # Ref: USR-REQ-EMBED-PDB
-                    "-DCMAKE_C_FLAGS_DEBUG=/MTd /Z7 /Ob0 /Od /RTC1",
+                    "-DCMAKE_C_FLAGS_DEBUG=/MTd /Z7 /Ob0 /Od /RTC1 -DZ_PREFIX",
                     
                     # Force Clean Release (Ref: USR-REQ-NO-DEBUG-INFO)
-                    "-DCMAKE_C_FLAGS_RELEASE=/MT /O2 /Ob2 /DNDEBUG"
+                    "-DCMAKE_C_FLAGS_RELEASE=/MT /O2 /Ob2 /DNDEBUG -DZ_PREFIX"
                 ]
                 
                 utils.Logger.detail(f"Configuring {arch_name} ({config})...")

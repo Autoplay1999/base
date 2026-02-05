@@ -6,7 +6,7 @@ import os
 # Ref: CC-OPT-NATIVE
 
 setup(
-    name="Antigravity Build Utils",
+    name="Build Utils",
     ext_modules=cythonize(
         "build_utils.py",
         compiler_directives={
