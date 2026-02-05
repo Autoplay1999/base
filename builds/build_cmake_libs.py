@@ -58,7 +58,7 @@ def build_cmake_lib(name: str, mod_dir: str, header_dir: str, pattern: str, cust
                 utils.Logger.detail(f"[{name}] Building {arch_name}|{config}...")
                 
                 build_temp = module_path / "build" / arch_name / config
-                utils.ensure_dir(build_temp)
+                utils.clean_dir(build_temp)
                 
                 vs_env = env_manager.get_env_vars(arch_name)
                 cmake_exe = env_manager.get_cmake_path(vs_env.get("PATH"))

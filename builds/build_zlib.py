@@ -158,7 +158,26 @@ def main() -> None:
         shutil.copy2(ZLIB_MODULE / "zlib.h", inc_dst)
         utils.Logger.success("Headers exported successfully to include/zlib.")
 
-        # --- 4. Finalize ---
+        # --- 4. Post-Export Sanitization ---
+        # Ensure Z_PREFIX is defined in the exported header to match build flags
+        # Ref: USR-REQ-Z-PREFIX-POST-BUILD (CC-ARCH-SYNC)
+        zconf_path: Path = inc_dst / "zconf.h"
+        if zconf_path.exists():
+            content = zconf_path.read_text()
+            # If it's already defined or not present in a form we expect, we sanitize it.
+            # Standard zlib zconf.h may have /* #undef Z_PREFIX */
+            if "#define Z_PREFIX" not in content or "/* #undef Z_PREFIX */" in content:
+                utils.Logger.detail("Injecting #define Z_PREFIX into zconf.h for consistency...")
+                if "/* #undef Z_PREFIX */" in content:
+                    content = content.replace("/* #undef Z_PREFIX */", "#define Z_PREFIX")
+                else:
+                    # Fallback: inject after main guard
+                    content = content.replace("#define ZCONF_H", "#define ZCONF_H\n\n#define Z_PREFIX")
+                
+                zconf_path.write_text(content)
+                utils.Logger.success("Z_PREFIX state synchronized in zconf.h.")
+
+        # --- 5. Finalize ---
         utils.write_build_token(token_dir, sources)
         utils.Logger.success(f"Build of {PRJ_NAME} completed successfully.")
 
